@@ -333,23 +333,89 @@ function run(){
 
   document.getElementById('r-explain').innerHTML=c.explain;
 
-  // 처방(코칭) — 설문 6개 항목 중 가장 약한 부분을 짚어서 그것만 처방
+  // ── 교차 분석용 원자재 계산 ──
   function clk(h){h=((h%24)+24)%24;const m=Math.round(h*60);let H=Math.floor(m/60),M=m%60;const p=H<12?'오전':'오후';let h12=H%12;if(h12===0)h12=12;return `${p} ${h12}시`+(M?` ${M}분`:'');}
-  const targetBed = jet>=1 ? wb-Math.min(1,jet*0.5) : wb;   // 취침 목표(시차 클수록 앞당김)
-  const targetWake = ww;                                     // 기상은 유지
-  const lightBy = clk(targetWake+0.25);                      // 기상 후 15분 내 햇빛
-  const weakIdx=vals.indexOf(Math.min(...vals));
-  const COACH_TIPS=[
-    ()=> jet>=1
-      ? `가장 약한 부분은 <b>규칙성</b>이에요. 주말에도 <b>기상 ${clk(targetWake)}</b>을 지키고, 취침을 매일 15분씩 앞당겨 <b>${clk(targetBed)}</b>까지 당겨보세요.`
-      : `<b>규칙성</b>은 이미 좋아요. 지금의 <b>취침 ${clk(wb)} / 기상 ${clk(ww)}</b> 리듬을 그대로 유지하세요.`,
-    ()=> `가장 약한 부분은 <b>빛 위생</b>이에요. 자기 전 스마트폰 화면이 멜라토닌 분비를 늦추고 있어요 — 취침 1시간 전부터 화면을 어둡게 하거나 치워두세요.`,
-    ()=> `가장 약한 부분은 <b>입면</b>이에요. 잠자리에서 뒤척이는 시간이 긴 편 — 눕기 전 <b>10분 스트레칭이나 메모</b>로 생각을 정리해보세요.`,
-    ()=> `가장 약한 부분은 <b>수면 유지</b>예요. 밤중에 자주 깨는 편 — 침실을 <b>더 어둡고 서늘하게</b> 만들고 자기 전 수분 섭취를 줄여보세요.`,
-    ()=> `가장 약한 부분은 <b>상쾌한 기상</b>이에요. 기상 후 <b>${lightBy}</b>까지 햇빛 15분이면 다음날 기상이 훨씬 수월해져요.`,
-    ()=> `가장 약한 부분은 <b>각성 관리</b>예요. 마지막 카페인을 <b>취침 6시간 전</b>까지로 당겨보세요.`
+  const targetWake = ww;
+  const idealSleep=7.5;
+  const weekDebt=Math.max(0,(idealSleep-wdDur))*5; // 평일 5일치 누적 부채(시간)
+  const catchUp=Math.max(0,(weDur-wdDur))*2;       // 주말에 더 잔 양(2일치)
+  const CAFF={0:null,1:11,2:14.5,3:18,4:20.5};     // 선택지 인덱스→마지막 카페인 시각(대략)
+  const nightIdx=idx('night'), morningIdx=idx('morning'), latIdx=idx('lat'), sleepyIdx=idx('sleepy'), phoneIdx=idx('phone'), caffIdx=idx('caff');
+  const caffHour=CAFF[caffIdx];
+  function halfLifeLeft(caffH,bedH){
+    if(caffH==null)return null;
+    let bh=bedH<12?bedH+24:bedH;
+    let gap=bh-caffH; if(gap<0)gap+=24;
+    const remain=Math.pow(0.5, gap/5);
+    return {gap,pct:Math.round(remain*100)};
+  }
+  const caff=halfLifeLeft(caffHour,wb);
+  const qualityGood = nightIdx<=1 && morningIdx<=1 && (latIdx===1||latIdx===2);
+
+  // ── 패턴 매칭: 개별 답변이 아니라 답변들 사이의 '조합'을 진단 ──
+  const PATTERNS=[
+    { match:()=> (chrono==='올빼미형'||chrono==='극야행성') && phoneIdx>=2 && jet>=1,
+      emoji:'🌘', title:'야행성 + 자기 전 폰 = 리듬 계속 밀림',
+      text:()=>`<b>${chrono}</b>인 데다 자기 전 스마트폰까지 겹쳐서 리듬이 계속 더 늦은 쪽으로 밀리고 있어요. 지금의 <b>${fmtH(jet)}</b> 시차는 그냥 두면 더 벌어질 수 있는 조합이에요.`,
+      action:()=>`자기 전 스마트폰 화면만 줄여도 리듬이 밀리는 속도를 늦출 수 있어요. 취침 1시간 전부터 화면을 어둡게 하거나 치워두세요.` },
+
+    { match:()=> (weekDebt>=2||catchUp>=2) && caffIdx>=2,
+      emoji:'☕', title:'수면 빚을 카페인으로 버티는 패턴',
+      text:()=>`평일에 수면 빚이 쌓이는데 카페인도 오후 늦게까지 마시는 편이에요. 부족한 잠을 카페인으로 버티다 밤에 또 설치는 <b>악순환</b>일 수 있어요.`,
+      action:()=>`마지막 카페인을 <b>취침 6시간 전</b>까지로 당기면 평일 수면의 질 자체가 늘어날 가능성이 커요.` },
+
+    { match:()=> regS<60 && qualityGood,
+      emoji:'🧭', title:'질은 좋은데 시간대가 문제',
+      text:()=>`잠들기·수면 유지·기상까지 <b>수면의 질 자체는 좋은 편</b>이에요. 문제는 '언제 자느냐'가 들쭉날쭉하다는 것 — 시간대만 맞추면 지금보다 훨씬 개운해질 조합이에요.`,
+      action:()=>`주말에도 <b>기상 ${clk(targetWake)}</b>만 고정해도 리듬이 크게 안정될 거예요.` },
+
+    { match:()=> avg>=7 && sleepyIdx===2,
+      emoji:'🌫️', title:'잠은 충분한데 낮에 졸림',
+      text:()=>`평균 수면시간(<b>${hhmm(avg)}</b>)은 부족하지 않은데도 낮에 자주 졸리다면, '양'이 아니라 <b>'질'의 문제</b>일 가능성이 커요.`,
+      action:()=>`야간 각성이나 카페인 타이밍부터 의심해보세요 — 같은 시간을 자도 깊이가 다를 수 있어요.` },
+
+    { match:()=> latIdx===0 && avg<7,
+      emoji:'🪫', title:'만성 수면 압력 의심',
+      text:()=>`눕자마자 5분 안에 기절하듯 잠드는데 평균 수면시간도 <b>${hhmm(avg)}</b>로 짧은 편이에요. 몸이 <b>수면 압력을 계속 쌓아두고 있다는 신호</b>일 수 있어요.`,
+      action:()=>`평일 취침을 20~30분만 앞당겨도 이 압력이 조금씩 풀릴 거예요.` },
+
+    { match:()=> regS>=70 && nightIdx>=2,
+      emoji:'🔔', title:'리듬은 좋은데 야간 각성이 발목',
+      text:()=>`취침·기상 시간대는 이미 안정적인데, <b>밤중에 자주 깨는 것</b>이 발목을 잡고 있어요. 시간대보다는 침실 환경이 원인일 가능성이 커요.`,
+      action:()=>`침실을 더 어둡고 서늘하게 만들고, 자기 전 수분 섭취를 줄여보세요.` },
+
+    { match:()=> phoneIdx>=2 && qualityGood && sleepyIdx<=1,
+      emoji:'📱', title:'폰 사용만 유일한 걸림돌',
+      text:()=>`다른 지표는 다 좋은데, <b>자기 전 스마트폰</b>만 유일한 걸림돌이에요. 이것만 줄여도 확실히 나아질 여지가 커요.`,
+      action:()=>`취침 1시간 전부터 화면 밝기를 낮추거나 다른 걸로 대체해보세요.` },
+
+    { match:()=> regS>=70 && qualityGood && sleepyIdx<=1,
+      emoji:'✅', title:'전반적으로 안정된 패턴',
+      text:()=>`리듬·수면유지·기상·낮 컨디션까지 <b>전반적으로 안정적</b>이에요. 지금 패턴이 이미 좋은 관리법이에요.`,
+      action:()=>`지금 패턴을 그대로 유지하는 게 최선이에요.` },
+
+    // 항상 매치되는 필러 (위 조합이 부족할 때만 채워 넣음)
+    { match:()=>true, emoji:'🛌', title: weekDebt>=2||catchUp>=2 ? '숨은 수면 빚' : '수면량 밸런스',
+      text:()=> weekDebt>=2||catchUp>=2
+        ? `평일 <b>${fmtH(wdDur)}</b> · 주말 <b>${fmtH(weDur)}</b>. 주말 늦잠은 쉬는 게 아니라 평일에 쌓인 <b>수면 빚을 갚는 중</b>이에요.`
+        : `평일 <b>${fmtH(wdDur)}</b> · 주말 <b>${fmtH(weDur)}</b>. 큰 차이가 없어 <b>수면 빚 없이</b> 잘 관리되고 있어요.`,
+      action:()=>`지금의 평일·주말 수면량 균형을 그대로 유지해보세요.` },
+    { match:()=>true, emoji:'☕', title: caffIdx===0?'카페인 청정':(caff&&caff.gap<6&&caff.pct>=20?'잠들 때 남은 카페인':'카페인 타이밍 굿'),
+      text:()=> caffIdx===0
+        ? `카페인을 안 드시네요. 입면과 깊은잠에 <b>유리한 조건</b>이에요.`
+        : (caff&&caff.gap<6&&caff.pct>=20
+          ? `마지막 카페인 뒤 <b>${caff.gap.toFixed(0)}시간</b> 만에 잠드는데, 아직 <b>약 ${caff.pct}%</b>가 남아 있어요.`
+          : `마지막 카페인과 취침 사이가 <b>${caff?caff.gap.toFixed(0)+'시간':'충분히'}</b> 떨어져 있어서 타이밍을 잘 지키고 계세요.`),
+      action:()=>`마지막 카페인을 <b>취침 6시간 전</b>까지로 당기면 더 안전해요.` }
   ];
-  document.getElementById('r-coach').innerHTML=COACH_TIPS[weakIdx]();
+
+  const matched=PATTERNS.filter(p=>p.match());
+  const top=matched.slice(0,3);
+  const primary=top[0];
+
+  document.getElementById('r-coach').innerHTML=primary.action();
+  document.getElementById('r-insights').innerHTML=top.map(p=>
+    `<div class="ins"><div class="h"><span class="em">${p.emoji}</span>${p.title}</div><div class="b">${p.text()}</div></div>`).join('');
 
   // 채우기
   document.getElementById('r-city').textContent=c.city;
@@ -363,104 +429,6 @@ function run(){
   document.getElementById('r-chrono2').textContent=cdesc;
   document.getElementById('r-score').textContent=sLab;
   document.getElementById('r-score2').textContent=score+' / 100';
-
-  // ── 의외의 발견 계산 ──
-  const idealSleep=7.5;
-  const weekDebt=Math.max(0,(idealSleep-wdDur))*5; // 평일 5일치 누적 부채(시간)
-  const catchUp=Math.max(0,(weDur-wdDur))*2;       // 주말에 더 잔 양(2일치)
-  const CAFF={0:null,1:11,2:14.5,3:18,4:20.5};     // 선택지 인덱스→마지막 카페인 시각(대략)
-  const caffIdx=idx('caff'); const caffHour=CAFF[caffIdx];
-  function halfLifeLeft(caffH,bedH){
-    if(caffH==null)return null;
-    let bh=bedH<12?bedH+24:bedH;     // 새벽 취침은 다음날로
-    let gap=bh-caffH; if(gap<0)gap+=24;
-    const remain=Math.pow(0.5, gap/5); // 반감기 5h
-    return {gap,pct:Math.round(remain*100)};
-  }
-  const caff=halfLifeLeft(caffHour,wb);
-
-  // 후보 인사이트 풀 — 설문 6개 항목을 전부 계산해두고, 그중 가장 눈에 띄는 3개만 골라 보여줌
-  const cand=[];
-
-  // 수면 빚 / 주말 몰아자기 (시간 기반)
-  if(weekDebt>=2 || catchUp>=2){
-    cand.push({sev:2,emoji:'🛌',title:'숨은 수면 빚',
-      text:`평일 <b>${fmtH(wdDur)}</b> · 주말 <b>${fmtH(weDur)}</b>. 주말 늦잠은 쉬는 게 아니라 평일에 쌓인 <b>수면 빚을 갚는 중</b>이에요.`});
-  } else {
-    cand.push({sev:0,emoji:'🛌',title:'수면량 밸런스',
-      text:`평일 <b>${fmtH(wdDur)}</b> · 주말 <b>${fmtH(weDur)}</b>. 큰 차이가 없어 <b>수면 빚 없이</b> 잘 관리되고 있어요.`});
-  }
-
-  // 야간 각성 빈도
-  const nightIdx=idx('night');
-  if(nightIdx===3){
-    cand.push({sev:3,emoji:'🌙',title:'잦은 뒤척임',
-      text:`밤마다 자주 깨는 편이에요. 총 수면시간이 길어도 <b>끊기지 않고 자는 것</b>이 더 중요할 수 있어요 — 침실 온도·소음부터 점검해보세요.`});
-  } else if(nightIdx===2){
-    cand.push({sev:2,emoji:'🌙',title:'한 번은 깨는 편',
-      text:`매일 밤 한 번쯤 깨는 편이에요. 자기 전 수분 섭취를 줄이면 <b>더 깊게 이어질 수</b> 있어요.`});
-  } else {
-    cand.push({sev:0,emoji:'🌙',title:'수면 유지 굿',
-      text:`밤에 거의 깨지 않는 편이에요. <b>수면의 연속성</b>이 좋아서 회복에 유리해요.`});
-  }
-
-  // 아침 기상
-  const morningIdx=idx('morning');
-  if(morningIdx===2){
-    cand.push({sev:3,emoji:'⏰',title:'힘겨운 기상',
-      text:`알람을 여러 번 맞춰도 겨우 일어나는 편이에요. 눈뜨자마자 <b>커튼을 열고 빛을 보면</b> 한결 수월해져요.`});
-  } else if(morningIdx===1){
-    cand.push({sev:1,emoji:'⏰',title:'알람 도움 필요',
-      text:`알람을 몇 번 눌러야 일어나는 편이에요. 기상 시각을 <b>주말에도 고정</b>하면 알람 없이도 눈이 떠지기 시작해요.`});
-  } else {
-    cand.push({sev:0,emoji:'⏰',title:'상쾌한 기상',
-      text:`알람 한 번에 바로 일어나는 편이에요. <b>기상 리듬이 안정적</b>이라는 신호예요.`});
-  }
-
-  // 잠들기까지 걸리는 시간
-  const latIdx=idx('lat');
-  if(latIdx===4){
-    cand.push({sev:3,emoji:'🔄',title:'잠들기까지 오래',
-      text:`잠자리에 누워도 <b>30분~1시간 넘게</b> 뒤척이는 편이에요. 자기 전 생각 정리나 가벼운 스트레칭이 도움이 될 수 있어요.`});
-  } else if(latIdx===3){
-    cand.push({sev:2,emoji:'🔄',title:'조금 오래 걸리는 입면',
-      text:`잠드는 데 30분~1시간 정도 걸리는 편이에요. 잠들기 전 루틴을 조금 더 일정하게 만들어보세요.`});
-  } else if(latIdx===0){
-    cand.push({sev:1,emoji:'⚡',title:'초고속 입면',
-      text:`눕자마자 5분 안에 잠드는 편이에요. 빨리 잠드는 건 좋지만, <b>너무 빠르면 평소 수면 부족의 신호</b>일 수도 있어요.`});
-  } else {
-    cand.push({sev:0,emoji:'🔑',title:'적당한 입면',
-      text:`잠드는 데 5~30분 정도 걸리는 편이에요. <b>이상적인 입면 시간</b>대예요.`});
-  }
-
-  // 낮 졸림
-  const sleepyIdx=idx('sleepy');
-  if(sleepyIdx===2){
-    cand.push({sev:3,emoji:'😴',title:'낮 시간 졸음',
-      text:`낮에 자주 꾸벅거리는 편이에요. 밤에 충분히 잔 것 같아도 낮졸림이 있다면 <b>수면의 질</b>을 의심해볼 시점이에요.`});
-  } else if(sleepyIdx===1){
-    cand.push({sev:1,emoji:'😴',title:'가끔 찾아오는 졸음',
-      text:`낮에 가끔 졸린 편이에요. 점심 직후 <b>10~20분 짧은 낮잠</b>이면 오히려 효율이 올라가요.`});
-  } else {
-    cand.push({sev:0,emoji:'😴',title:'낮 컨디션 굿',
-      text:`낮에 거의 졸리지 않는 편이에요. 밤 사이 <b>회복이 잘 되고 있다는 신호</b>예요.`});
-  }
-
-  // 카페인 타이밍
-  if(caffIdx===0){
-    cand.push({sev:0,emoji:'☕',title:'카페인 청정',
-      text:`카페인을 안 드시네요. 입면과 깊은잠에 <b>유리한 조건</b>이에요.`});
-  } else if(caff && caff.gap < 6 && caff.pct>=20){
-    cand.push({sev:2,emoji:'☕',title:'잠들 때 남은 카페인',
-      text:`마지막 카페인 뒤 <b>${caff.gap.toFixed(0)}시간</b> 만에 잠드는데, 아직 <b>약 ${caff.pct}%</b>가 남아 있어요. <b>취침 6시간 전</b>까지만 마셔보세요.`});
-  } else {
-    cand.push({sev:0,emoji:'☕',title:'카페인 타이밍 굿',
-      text:`마지막 카페인과 취침 사이가 <b>${caff?caff.gap.toFixed(0)+'시간':'충분히'}</b> 떨어져 있어서 <b>타이밍을 잘 지키고</b> 계세요.`});
-  }
-
-  const ins=cand.sort((a,b)=>b.sev-a.sev).slice(0,3);
-  document.getElementById('r-insights').innerHTML=ins.map(a=>
-    `<div class="ins"><div class="h"><span class="em">${a.emoji}</span>${a.title}</div><div class="b">${a.text}</div></div>`).join('');
 
   drawRadar(vals);
 
