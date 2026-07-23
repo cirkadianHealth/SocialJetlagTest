@@ -265,7 +265,9 @@ const CITIES=[
 function cityFor(h){for(const c of CITIES)if(h<=c.max)return c;return CITIES[CITIES.length-1];}
 function cityExplain(c,jet){
   if(!c.travel) return '이번 주는 어디로도 안 떠나고 그대로 <b>서울</b>에 머물러 있어요. 리듬이 안 흔들려서 몸이 편안한 거예요.';
-  return `당신은 주말마다 <b>${c.travel}</b>까지 날아갔다 오는 셈이에요. 비행기도 안 탔는데 시차 적응만 매주 반복하니, 월요일이 버거운 게 당연해요. 매주 <b>${fmtH(jet)}</b>씩 몸속 시계를 옮겼다 되돌리는 중이거든요.`;
+  if(jet<1.5) return `당신은 주말마다 살짝 <b>${c.travel}</b> 쪽으로 다녀오는 정도예요. 매주 <b>${fmtH(jet)}</b> 정도면 사실 몸이 크게 티 나게 느낄 수준은 아니에요 — 지금은 무리 없는 가벼운 시차예요.`;
+  if(jet<4) return `당신은 주말마다 <b>${c.travel}</b>까지 날아갔다 오는 셈이에요. 비행기도 안 탔는데 시차 적응만 매주 반복하니, 월요일이 버거운 게 당연해요. 매주 <b>${fmtH(jet)}</b>씩 몸속 시계를 옮겼다 되돌리는 중이거든요.`;
+  return `당신은 주말마다 <b>${c.travel}</b>까지 진짜 장거리 비행을 하고 오는 셈이에요. 매주 <b>${fmtH(jet)}</b>씩 시차 적응을 반복하는 거라 몸이 남아날 수가 없어요 — 웬만한 해외여행 시차보다 더한 걸 매주 겪는 거예요.`;
 }
 const clamp=(v,a,b)=>Math.max(a,Math.min(b,v));
 function dec(s){const[h,m]=s.split(':').map(Number);return h+m/60;}
@@ -315,7 +317,12 @@ function run(){
   const regS=clamp(100-jet*22,0,100);
   const lenS=clamp(100-Math.abs(avg-7.5)*18,0,100);
   const vals=[regS, sc('phone'), sc('lat'), sc('night'), sc('morning'), sc('caff')];
-  const score=Math.round(0.20*regS+0.18*sc('phone')+0.10*sc('lat')+0.16*sc('night')+0.12*sc('morning')+0.10*sc('caff')+0.10*sc('sleepy')+0.04*lenS);
+  const idealSleep=7.5;
+  const weekDebt=Math.max(0,(idealSleep-wdDur))*5; // 평일 5일치 누적 부채(시간)
+  const catchUp=Math.max(0,(weDur-wdDur))*2;       // 주말에 더 잔 양(2일치)
+  // 평일·주말을 섞은 평균만 보면 "평일 쪽잠 + 주말 몰아자기"가 정상으로 위장돼서, 그 격차만큼 따로 감점
+  const debtPenalty=clamp(Math.max(0,idealSleep-wdDur)*8 + Math.max(0,weDur-wdDur)*3, 0, 45);
+  const score=Math.max(0,Math.round(0.20*regS+0.18*sc('phone')+0.10*sc('lat')+0.16*sc('night')+0.12*sc('morning')+0.10*sc('caff')+0.10*sc('sleepy')+0.04*lenS-debtPenalty));
   const sLab=score>=80?'최상':score>=60?'양호':score>=40?'주의':'위험';
 
   // 크로노타입
@@ -340,9 +347,6 @@ function run(){
   // ── 교차 분석용 원자재 계산 ──
   function clk(h){h=((h%24)+24)%24;const m=Math.round(h*60);let H=Math.floor(m/60),M=m%60;const p=H<12?'오전':'오후';let h12=H%12;if(h12===0)h12=12;return `${p} ${h12}시`+(M?` ${M}분`:'');}
   const targetWake = ww;
-  const idealSleep=7.5;
-  const weekDebt=Math.max(0,(idealSleep-wdDur))*5; // 평일 5일치 누적 부채(시간)
-  const catchUp=Math.max(0,(weDur-wdDur))*2;       // 주말에 더 잔 양(2일치)
   const CAFF={0:null,1:11,2:14.5,3:18,4:20.5};     // 선택지 인덱스→마지막 카페인 시각(대략)
   const nightIdx=idx('night'), morningIdx=idx('morning'), latIdx=idx('lat'), sleepyIdx=idx('sleepy'), phoneIdx=idx('phone'), caffIdx=idx('caff');
   const caffHour=CAFF[caffIdx];
@@ -358,6 +362,11 @@ function run(){
 
   // ── 패턴 매칭: 개별 답변이 아니라 답변들 사이의 '조합'을 진단 ──
   const PATTERNS=[
+    { match:()=> weekDebt+catchUp>=15,
+      emoji:'🚨', title:'평일 쪽잠 + 주말 몰아자기',
+      text:()=>`평일엔 <b>${fmtH(wdDur)}</b>밖에 못 자고 주말엔 <b>${fmtH(weDur)}</b>까지 몰아 자는 편이에요. 평균만 보면 괜찮아 보여도, 실제로는 평일 내내 <b>수면 부채를 쌓았다가 주말에 한 번에 갚는</b> 패턴이라 몸에는 오히려 더 부담이에요.`,
+      action:()=>`평일 취침을 30분만 앞당겨서 평일 수면 자체를 늘리는 게, 주말에 몰아 자는 것보다 훨씬 효과적이에요.` },
+
     { match:()=> (chrono==='올빼미형'||chrono==='극야행성') && phoneIdx>=2 && jet>=1,
       emoji:'🌘', title:'야행성 + 자기 전 폰 = 리듬 계속 밀림',
       text:()=>`<b>${chrono}</b>인 데다 자기 전 스마트폰까지 겹쳐서 리듬이 계속 더 늦은 쪽으로 밀리고 있어요. 지금의 <b>${fmtH(jet)}</b> 시차는 그냥 두면 더 벌어질 수 있는 조합이에요.`,
@@ -388,18 +397,18 @@ function run(){
       text:()=>`취침·기상 시간대는 이미 안정적인데, <b>밤중에 자주 깨는 것</b>이 발목을 잡고 있어요. 시간대보다는 침실 환경이 원인일 가능성이 커요.`,
       action:()=>`침실을 더 어둡고 서늘하게 만들고, 자기 전 수분 섭취를 줄여보세요.` },
 
-    { match:()=> phoneIdx>=2 && qualityGood && sleepyIdx<=1,
+    { match:()=> phoneIdx>=2 && qualityGood && sleepyIdx<=1 && weekDebt<2 && catchUp<2,
       emoji:'📱', title:'폰 사용만 유일한 걸림돌',
       text:()=>`다른 지표는 다 좋은데, <b>자기 전 스마트폰</b>만 유일한 걸림돌이에요. 이것만 줄여도 확실히 나아질 여지가 커요.`,
       action:()=>`취침 1시간 전부터 화면 밝기를 낮추거나 다른 걸로 대체해보세요.` },
 
-    { match:()=> regS>=70 && qualityGood && sleepyIdx<=1,
+    { match:()=> regS>=70 && qualityGood && sleepyIdx<=1 && weekDebt<2 && catchUp<2,
       emoji:'✅', title:'전반적으로 안정된 패턴',
       text:()=>`리듬·수면유지·기상·낮 컨디션까지 <b>전반적으로 안정적</b>이에요. 지금 패턴이 이미 좋은 관리법이에요.`,
       action:()=>`지금 패턴을 그대로 유지하는 게 최선이에요.` },
 
-    // 항상 매치되는 필러 (위 조합이 부족할 때만 채워 넣음)
-    { match:()=>true, emoji:'🛌', title: weekDebt>=2||catchUp>=2 ? '숨은 수면 빚' : '수면량 밸런스',
+    // 항상 매치되는 필러 (위 조합이 부족할 때만 채워 넣음). 심한 불균형은 위의 전용 패턴이 이미 다루므로 중복 방지
+    { match:()=> weekDebt+catchUp<15, emoji:'🛌', title: weekDebt>=2||catchUp>=2 ? '숨은 수면 빚' : '수면량 밸런스',
       text:()=> weekDebt>=2||catchUp>=2
         ? `평일 <b>${fmtH(wdDur)}</b> · 주말 <b>${fmtH(weDur)}</b>. 주말 늦잠은 쉬는 게 아니라 평일에 쌓인 <b>수면 빚을 갚는 중</b>이에요.`
         : `평일 <b>${fmtH(wdDur)}</b> · 주말 <b>${fmtH(weDur)}</b>. 큰 차이가 없어 <b>수면 빚 없이</b> 잘 관리되고 있어요.`,
