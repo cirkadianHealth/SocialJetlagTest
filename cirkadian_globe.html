@@ -26,18 +26,12 @@ canvas{display:block}
 
 .board{position:fixed;top:150px;right:34px;width:310px;z-index:5}
 .board .body{padding:14px}
-.king{display:flex;align-items:center;gap:12px;background:var(--pale);border:3px solid var(--ink);padding:12px 14px;margin-bottom:14px;box-shadow:3px 3px 0 var(--ink)}
-.king .medal{font-size:34px;line-height:1}
-.king .kt{flex:1}
-.king .kt .kc{font-size:20px;font-weight:900}
-.king .kt .kh{font-family:var(--pixel);font-size:12px;color:var(--orange-d);margin-top:4px}
-.king .kt .kn{font-size:12px;color:var(--muted);font-weight:700;margin-top:3px}
 .list{display:flex;flex-direction:column;gap:8px}
 .row{display:flex;align-items:center;gap:9px;font-size:14px}
 .row .em{font-size:19px;line-height:1}
 .row .city{flex:1;font-weight:900}
 .row .cnt{font-family:var(--pixel);color:var(--muted);font-size:10px}
-.row .hr{font-family:var(--pixel);color:var(--orange-d);font-size:10px;min-width:60px;text-align:right}
+.row .pct{font-family:var(--pixel);color:var(--orange-d);font-size:10px;min-width:42px;text-align:right}
 
 .podium{position:fixed;top:150px;left:34px;width:300px;z-index:5}
 .podium .body{padding:14px;display:flex;flex-direction:column;gap:10px}
@@ -53,7 +47,7 @@ canvas{display:block}
 .prow.p1 .pcity{font-size:14px;color:var(--ink)}
 .prow.p1 .phr{font-size:17px;margin-top:7px}
 
-.total{position:fixed;bottom:120px;left:34px;z-index:5;background:#fff;border:3px solid var(--ink);box-shadow:4px 4px 0 var(--ink);padding:12px 18px;font-weight:900;font-size:14px}
+.total{position:fixed;bottom:66px;left:34px;z-index:5;background:#fff;border:3px solid var(--ink);box-shadow:4px 4px 0 var(--ink);padding:12px 18px;font-weight:900;font-size:14px}
 .total b{font-family:var(--pixel);color:var(--orange-d);font-size:20px;margin:0 4px}
 
 .footer{position:fixed;bottom:0;left:0;right:0;z-index:5;background:var(--ink);color:#fff;display:flex;justify-content:space-between;align-items:center;padding:11px 34px}
@@ -61,7 +55,7 @@ canvas{display:block}
 .footer .l b{color:var(--orange)}
 .footer .r{font-family:var(--pixel);font-size:11px;color:#C9BE9E;letter-spacing:1px}
 
-.scan{position:fixed;bottom:120px;right:34px;z-index:5;background:#fff;border:3px solid var(--ink);box-shadow:4px 4px 0 var(--ink);padding:12px;display:flex;gap:12px;align-items:center}
+.scan{position:fixed;bottom:66px;right:34px;z-index:5;background:#fff;border:3px solid var(--ink);box-shadow:4px 4px 0 var(--ink);padding:12px;display:flex;gap:12px;align-items:center}
 .scan #survey-qr{width:78px;height:78px}
 .scan #survey-qr img,.scan #survey-qr canvas{width:100%!important;height:100%!important;display:block}
 .scan .st{font-weight:900;font-size:13px;line-height:1.4;max-width:110px}
@@ -95,17 +89,8 @@ canvas{display:block}
 </div>
 
 <div class="board panel">
-  <div class="bar">🥇 오늘의 시차왕</div>
+  <div class="bar">🌍 국가별 참가 현황</div>
   <div class="body">
-    <div class="king">
-      <div class="medal">🥇</div>
-      <div class="kt">
-        <div class="kc" id="k-city">—</div>
-        <div class="kh" id="k-hr">-- : --</div>
-        <div class="kn" id="k-name"></div>
-      </div>
-
-    </div>
     <div class="list" id="list"></div>
   </div>
 </div>
@@ -340,16 +325,12 @@ function addEntry(name,hours){
 }
 function renderBoard(){
   document.getElementById('total').textContent=total;
-  let king=null;for(const e of entries){if(!king||e.hours>king.hours)king=e;}
-  if(king){
-    document.getElementById('k-city').textContent=king.c.emoji+' '+king.c.city;
-    document.getElementById('k-hr').textContent=fmtH(king.hours);
-    document.getElementById('k-name').textContent=king.name?king.name+'님 · '+king.c.lm:king.c.lm;
-  }
-  const agg={};for(const e of entries){const k=e.c.key;if(!agg[k])agg[k]={c:e.c,n:0,max:0};agg[k].n++;agg[k].max=Math.max(agg[k].max,e.hours);}
-  const rows=Object.values(agg).sort((a,b)=>b.max-a.max).slice(0,7);
-  document.getElementById('list').innerHTML=rows.map(r=>
-    `<div class="row"><span class="em">${r.c.icon}</span><span class="city">${r.c.city}</span><span class="cnt">${r.n}명</span><span class="hr">${fmtH(r.max)}</span></div>`).join('');
+  const agg={};for(const e of entries){const k=e.c.key;if(!agg[k])agg[k]={c:e.c,n:0};agg[k].n++;}
+  const rows=Object.values(agg).sort((a,b)=>b.n-a.n);
+  document.getElementById('list').innerHTML=rows.map(r=>{
+    const pct=total>0?Math.round(r.n/total*100):0;
+    return `<div class="row"><span class="em">${r.c.icon}</span><span class="city">${r.c.city}</span><span class="cnt">${r.n}명</span><span class="pct">${pct}%</span></div>`;
+  }).join('');
   renderPodium();
 }
 function renderPodium(){
