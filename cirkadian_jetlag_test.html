@@ -322,7 +322,9 @@ function run(){
   const catchUp=Math.max(0,(weDur-wdDur))*2;       // 주말에 더 잔 양(2일치)
   // 평일·주말을 섞은 평균만 보면 "평일 쪽잠 + 주말 몰아자기"가 정상으로 위장돼서, 그 격차만큼 따로 감점
   const debtPenalty=clamp(Math.max(0,idealSleep-wdDur)*8 + Math.max(0,weDur-wdDur)*3, 0, 45);
-  const score=Math.max(0,Math.round(0.20*regS+0.18*sc('phone')+0.10*sc('lat')+0.16*sc('night')+0.12*sc('morning')+0.10*sc('caff')+0.10*sc('sleepy')+0.04*lenS-debtPenalty));
+  // 밤에 자주 깨거나(자주) 낮에 자주 조는 건 가중치만으로는 등급을 못 끌어내리길래 심한 경우만 따로 감점
+  const qualityPenalty=(idx('night')===3?10:0)+(idx('sleepy')===2?12:0);
+  const score=Math.max(0,Math.round(0.20*regS+0.18*sc('phone')+0.10*sc('lat')+0.16*sc('night')+0.12*sc('morning')+0.10*sc('caff')+0.10*sc('sleepy')+0.04*lenS-debtPenalty-qualityPenalty));
   const sLab=score>=80?'최상':score>=60?'양호':score>=40?'주의':'위험';
 
   // 크로노타입
@@ -392,6 +394,11 @@ function run(){
       text:()=>`눕자마자 5분 안에 기절하듯 잠드는데 평균 수면시간도 <b>${hhmm(avg)}</b>로 짧은 편이에요. 몸이 <b>수면 압력을 계속 쌓아두고 있다는 신호</b>일 수 있어요.`,
       action:()=>`평일 취침을 20~30분만 앞당겨도 이 압력이 조금씩 풀릴 거예요.` },
 
+    { match:()=> latIdx>=3,
+      emoji:'🔄', title:'잠들기까지 오래 걸리는 편',
+      text:()=>`잠자리에 누워도 <b>${latIdx===4?'1시간 넘게':'30분 이상'}</b> 뒤척이는 편이에요. 몸은 누웠는데 머리는 아직 안 자고 있는 상태 — 각성 상태로 눕는 게 원인일 수 있어요.`,
+      action:()=>`눕기 전 10분 정도 스트레칭이나 메모로 생각을 정리해보세요. 입면 시간이 눈에 띄게 줄어들 수 있어요.` },
+
     { match:()=> regS>=70 && nightIdx>=2,
       emoji:'🔔', title:'리듬은 좋은데 야간 각성이 발목',
       text:()=>`취침·기상 시간대는 이미 안정적인데, <b>밤중에 자주 깨는 것</b>이 발목을 잡고 있어요. 시간대보다는 침실 환경이 원인일 가능성이 커요.`,
@@ -401,6 +408,14 @@ function run(){
       emoji:'📱', title:'폰 사용만 유일한 걸림돌',
       text:()=>`다른 지표는 다 좋은데, <b>자기 전 스마트폰</b>만 유일한 걸림돌이에요. 이것만 줄여도 확실히 나아질 여지가 커요.`,
       action:()=>`취침 1시간 전부터 화면 밝기를 낮추거나 다른 걸로 대체해보세요.` },
+
+    // 위의 더 구체적인 폰 관련 조합에 안 걸렸어도, 폰 사용 자체가 나쁘면 최소 한 번은 짚어줌
+    { match:()=> phoneIdx>=2
+        && !((chrono==='올빼미형'||chrono==='극야행성') && jet>=1)
+        && !(qualityGood && sleepyIdx<=1 && weekDebt<2 && catchUp<2),
+      emoji:'📵', title:'자기 전 스마트폰 습관',
+      text:()=>`자기 전 스마트폰을 오래 보는 편이에요. 화면 빛이 멜라토닌 분비를 늦춰서 잠드는 시각 자체를 뒤로 미룰 수 있어요.`,
+      action:()=>`취침 1시간 전부터는 화면 밝기를 낮추거나 다른 걸로 대체해보세요.` },
 
     { match:()=> regS>=70 && qualityGood && sleepyIdx<=1 && weekDebt<2 && catchUp<2,
       emoji:'✅', title:'전반적으로 안정된 패턴',
