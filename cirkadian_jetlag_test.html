@@ -281,6 +281,15 @@ const QS=[
  {id:'sleepy',q:'낮에 졸린가요?',o:[['거의 안 졸림',100],['가끔',65],['자주 꾸벅',30]]},
 ];
 const ans={};
+
+/* 닉네임 비워두면 식물 이름으로 랜덤 생성 */
+const PLANT_ADJ=['행복한','졸린','튼튼한','수줍은','용감한','촉촉한','푸른','향긋한','느긋한','대담한','상큼한','포근한','반짝이는','씩씩한'];
+const PLANT_NOUN=['민들레','튤립','장미','대나무','소나무','이끼','클로버','해바라기','라벤더','고사리','알로에','벚꽃','선인장','자작나무'];
+function randomPlantName(){
+  const a=PLANT_ADJ[Math.floor(Math.random()*PLANT_ADJ.length)];
+  const n=PLANT_NOUN[Math.floor(Math.random()*PLANT_NOUN.length)];
+  return `${a} ${n}`;
+}
 function renderSurvey(){
   document.getElementById('survey').innerHTML=QS.map(Q=>
     `<div class="q"><div class="qt">${Q.q}</div><div class="opts">${
@@ -399,7 +408,7 @@ function run(){
   fillStoryCard(c,jet);
 
   // 부스 모니터(같은 브라우저로 테스트할 때만 동작) + Supabase 익명 저장
-  const nickname=(document.getElementById('name').value||'').trim().slice(0,8);
+  const nickname=(document.getElementById('name').value||'').trim().slice(0,8)||randomPlantName();
   try{new BroadcastChannel('cirkadian').postMessage({hours:jet,name:nickname});}catch(_){}
   submitAnon({wb,ww,eb,ew,wdDur,weDur,avg,wdMid,jet,chrono,score,cityKey:c.key,nickname});
 }
