@@ -8,6 +8,7 @@
 create table if not exists research_responses (
   id                  uuid primary key default gen_random_uuid(),
   created_at          timestamptz not null default now(),
+  submission_id       uuid    not null,  -- shared with the matching board_events row, for correlated admin delete
 
   wd_bed_min          int     not null,  -- weekday bedtime, minutes after 00:00 (0-1439)
   wd_wake_min         int     not null,
@@ -48,6 +49,7 @@ create policy "anon can insert research responses"
 create table if not exists board_events (
   id                 uuid primary key default gen_random_uuid(),
   created_at         timestamptz not null default now(),
+  submission_id      uuid    not null,  -- shared with the matching research_responses row, for correlated admin delete
   city_key           text    not null,
   social_jetlag_min  numeric not null
 );
@@ -67,3 +69,35 @@ create policy "anyone can read board events"
 -- Enable realtime (Database > Replication in the dashboard must also have
 -- this table toggled on for the "supabase_realtime" publication).
 alter publication supabase_realtime add table board_events;
+
+-- 3) Migration: submission_id links a research_responses row to its
+--    matching board_events row (same submission), so the admin page can
+--    delete one visitor's entry from both tables without ever needing to
+--    read research_responses. Safe to re-run.
+alter table research_responses add column if not exists submission_id uuid;
+update research_responses set submission_id = gen_random_uuid() where submission_id is null;
+alter table research_responses alter column submission_id set not null;
+
+alter table board_events add column if not exists submission_id uuid;
+update board_events set submission_id = gen_random_uuid() where submission_id is null;
+alter table board_events alter column submission_id set not null;
+
+-- 4) Admin dashboard (cirkadian_admin.html) reset + per-entry delete.
+--    These let the anon key delete rows so the booth operator can wipe
+--    today's/all data (or one selected entry) from the admin UI. Note:
+--    the anon key is public (shipped in client-side HTML), so this delete
+--    capability is only as protected as the admin page's own password
+--    prompt — anyone with the key could call it directly. Acceptable for
+--    this low-stakes booth tool, but don't reuse this pattern for
+--    anything sensitive.
+drop policy if exists "anon can delete research responses" on research_responses;
+create policy "anon can delete research responses"
+  on research_responses for delete
+  to anon
+  using (true);
+
+drop policy if exists "anon can delete board events" on board_events;
+create policy "anon can delete board events"
+  on board_events for delete
+  to anon
+  using (true);

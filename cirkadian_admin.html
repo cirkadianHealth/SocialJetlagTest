@@ -1,0 +1,263 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>관리자 대시보드 · CIRKADIAN</title>
+<link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&family=Noto+Sans+KR:wght@400;500;700;900&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<style>
+:root{--ink:#17130D;--orange:#F2A63B;--orange-d:#D9700A;--pale:#FFF3D6;--pale2:#FFE6B3;--muted:#8A7B5E;--bad:#C9463A;--pixel:'Press Start 2P',monospace;--kr:'Noto Sans KR',sans-serif}
+*{margin:0;box-sizing:border-box}
+body{background:radial-gradient(1000px 700px at 50% 0%,#FFF8E6,#FFF0CE 60%,#FCE6B0);font-family:var(--kr);color:var(--ink);padding:24px 16px 60px;display:flex;justify-content:center}
+.wrap{width:100%;max-width:880px}
+.head{display:flex;align-items:center;justify-content:space-between;margin-bottom:18px;flex-wrap:wrap;gap:10px}
+.head img{height:26px}
+.head .t{font-size:13px;font-weight:900;color:var(--muted)}
+.refresh{font-family:var(--kr);font-weight:900;font-size:13px;border:3px solid var(--ink);background:#fff;color:var(--ink);padding:9px 14px;box-shadow:3px 3px 0 var(--ink);cursor:pointer}
+.refresh:active{transform:translate(2px,2px);box-shadow:1px 1px 0 var(--ink)}
+
+.panel{background:#fff;border:3px solid var(--ink);box-shadow:6px 6px 0 var(--ink);padding:18px;margin-bottom:18px}
+.bar{background:var(--ink);color:#fff;font-weight:900;font-size:13px;padding:8px 13px;display:inline-block;margin-bottom:14px}
+
+.tiles{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:18px}
+.tile{background:#fff;border:3px solid var(--ink);box-shadow:5px 5px 0 var(--ink);padding:18px;text-align:center}
+.tile .n{font-family:var(--pixel);font-size:32px;color:var(--orange-d)}
+.tile .l{font-size:12px;font-weight:700;color:var(--muted);margin-top:8px}
+
+.hrow{display:flex;align-items:center;gap:10px;margin-bottom:9px;font-size:12.5px}
+.hrow .lab{width:96px;flex-shrink:0;font-weight:700}
+.hrow .track{flex:1;background:var(--pale);height:18px;position:relative}
+.hrow .fill{background:var(--orange);height:100%;border-radius:0 4px 4px 0}
+.hrow .cnt{width:34px;flex-shrink:0;font-family:var(--pixel);font-size:11px;color:var(--orange-d);text-align:right}
+.empty{font-size:12.5px;color:var(--muted);text-align:center;padding:10px 0}
+
+.vbars{display:flex;align-items:flex-end;gap:6px;height:140px;padding-top:10px}
+.vbar{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:flex-end;height:100%}
+.vbar .fill{width:100%;max-width:26px;background:var(--orange);border-radius:3px 3px 0 0;min-height:2px}
+.vbar .n{font-size:10px;font-weight:900;color:var(--orange-d);margin-bottom:3px;min-height:12px}
+.vbar .x{font-size:9.5px;color:var(--muted);font-weight:700;margin-top:6px;white-space:nowrap}
+
+table.entries{width:100%;border-collapse:collapse;font-size:12.5px}
+table.entries th{text-align:left;color:var(--muted);font-size:11px;font-weight:700;padding:4px 6px;border-bottom:2px solid var(--ink)}
+table.entries td{padding:7px 6px;border-bottom:1px solid var(--pale2)}
+table.entries button{font-family:var(--kr);font-weight:700;font-size:11px;border:2px solid var(--bad);background:#fff;color:var(--bad);padding:4px 9px;cursor:pointer}
+table.entries button:active{transform:translate(1px,1px)}
+.scroll{max-height:340px;overflow-y:auto}
+
+.danger{border-color:var(--bad)}
+.danger .bar{background:var(--bad)}
+.dbtns{display:flex;gap:10px;flex-wrap:wrap}
+.dbtn{font-family:var(--kr);font-weight:900;font-size:13px;border:3px solid var(--bad);background:#fff;color:var(--bad);padding:12px 16px;box-shadow:3px 3px 0 var(--bad);cursor:pointer;flex:1;min-width:160px}
+.dbtn:active{transform:translate(2px,2px);box-shadow:1px 1px 0 var(--bad)}
+
+.pwd-bg{display:none;position:fixed;inset:0;background:rgba(23,19,13,.55);z-index:50;align-items:center;justify-content:center;padding:20px}
+.pwd-bg.show{display:flex}
+.pwd{background:#fff;border:4px solid var(--ink);box-shadow:8px 8px 0 var(--ink);width:100%;max-width:300px;padding:20px}
+.pwd .pt{font-weight:900;font-size:14px;margin-bottom:4px}
+.pwd .ps{font-size:11.5px;color:var(--muted);margin-bottom:12px}
+.pwd input{width:100%;font-family:var(--pixel);font-size:20px;text-align:center;letter-spacing:6px;border:3px solid var(--ink);background:var(--pale);padding:12px 6px;box-shadow:3px 3px 0 var(--ink)}
+.pwd input:focus{outline:none;background:var(--pale2)}
+.pwd .err{color:var(--bad);font-size:11.5px;font-weight:700;margin-top:8px;min-height:16px}
+.pwd .prow{display:flex;gap:8px;margin-top:14px}
+.pwd .prow button{flex:1;font-family:var(--kr);font-weight:900;font-size:13px;border:3px solid var(--ink);padding:10px;cursor:pointer}
+.pwd .ok{background:var(--bad);color:#fff}
+.pwd .cancel{background:#fff;color:var(--ink)}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="head">
+    <img src="logo.png" alt="CIRKADIAN">
+    <div class="t">부스 설문 관리자 대시보드</div>
+    <button class="refresh" onclick="loadAll()">🔄 새로고침</button>
+  </div>
+
+  <div class="tiles">
+    <div class="tile"><div class="n" id="t-total">–</div><div class="l">전체 응답 수</div></div>
+    <div class="tile"><div class="n" id="t-today">–</div><div class="l">오늘 응답 수</div></div>
+  </div>
+
+  <div class="panel">
+    <span class="bar">🌍 도시별 응답 분포</span>
+    <div id="city-chart"></div>
+  </div>
+
+  <div class="panel">
+    <span class="bar">⏱️ 사회적 시차 분포</span>
+    <div class="vbars" id="jet-chart"></div>
+  </div>
+
+  <div class="panel">
+    <span class="bar">📈 시간대별 응답 추이 (오늘)</span>
+    <div class="vbars" id="hour-chart"></div>
+  </div>
+
+  <div class="panel">
+    <span class="bar">🗂️ 최근 응답 (최신 100개)</span>
+    <div class="scroll">
+      <table class="entries">
+        <thead><tr><th>시각</th><th>도시</th><th>사회적 시차</th><th></th></tr></thead>
+        <tbody id="entries-body"></tbody>
+      </table>
+    </div>
+  </div>
+
+  <div class="panel danger">
+    <span class="bar">⚠️ 데이터 리셋</span>
+    <p style="font-size:11.5px;color:var(--muted);margin-bottom:12px;line-height:1.5">리셋하면 모니터 표시용 데이터와 연구용 원본 설문 응답이 <b>함께, 영구적으로</b> 삭제돼요. 되돌릴 수 없습니다.</p>
+    <div class="dbtns">
+      <button class="dbtn" onclick="requireAuth(resetToday)">🗓️ 오늘 데이터 리셋</button>
+      <button class="dbtn" onclick="requireAuth(resetAll)">🧨 전체 리셋</button>
+    </div>
+  </div>
+</div>
+
+<div class="pwd-bg" id="pwd-bg" onclick="if(event.target===this)closePwd()">
+  <div class="pwd">
+    <div class="pt">🔒 관리자 비밀번호</div>
+    <div class="ps">삭제를 진행하려면 비밀번호를 입력하세요.</div>
+    <input type="password" id="pwd-input" inputmode="numeric" maxlength="8" autocomplete="off">
+    <div class="err" id="pwd-err"></div>
+    <div class="prow">
+      <button class="cancel" onclick="closePwd()">취소</button>
+      <button class="ok" onclick="confirmPwd()">확인</button>
+    </div>
+  </div>
+</div>
+
+<script>
+const SUPABASE_URL='https://kbfvjlhpnjqhlofvwvab.supabase.co';
+const SUPABASE_ANON_KEY='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImtiZnZqbGhwbmpxaGxvZnZ3dmFiIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODQ2MjU5OTUsImV4cCI6MjEwMDIwMTk5NX0.-1Zb0ekBO5A0f-Mznv9XMa6pdLhaPTWHztmorfD06JA';
+const ADMIN_PASSWORD='0000';
+const supa=window.supabase.createClient(SUPABASE_URL,SUPABASE_ANON_KEY);
+
+const CITY_ORDER=['SEL','PEK','BKK','DEL','DXB','NBO','MOW','ROM','LON','NYC','SFO'];
+const CITY_INFO={
+  SEL:{city:'서울',icon:'🗼'}, PEK:{city:'베이징',icon:'🏯'}, BKK:{city:'방콕',icon:'🛕'},
+  DEL:{city:'델리',icon:'🕌'}, DXB:{city:'두바이',icon:'🏙️'}, NBO:{city:'나이로비',icon:'🦁'},
+  MOW:{city:'모스크바',icon:'🏰'}, ROM:{city:'로마',icon:'🏛️'}, LON:{city:'런던',icon:'🎡'},
+  NYC:{city:'뉴욕',icon:'🗽'}, SFO:{city:'샌프란시스코',icon:'🌉'}
+};
+function fmtH(min){min=Math.round(min);const H=Math.floor(min/60),M=min%60;return H>0?`${H}시간 ${M}분`:`${M}분`;}
+function isToday(iso){const d=new Date(iso),n=new Date();return d.getFullYear()===n.getFullYear()&&d.getMonth()===n.getMonth()&&d.getDate()===n.getDate();}
+function todayStartISO(){const n=new Date();return new Date(n.getFullYear(),n.getMonth(),n.getDate()).toISOString();}
+
+let rows=[];
+async function loadAll(){
+  const {data,error}=await supa.from('board_events')
+    .select('id,submission_id,city_key,social_jetlag_min,created_at')
+    .order('created_at',{ascending:false})
+    .limit(5000);
+  if(error){alert('데이터를 불러오지 못했어요: '+error.message);return;}
+  rows=data||[];
+  render();
+}
+
+function render(){
+  document.getElementById('t-total').textContent=rows.length;
+  document.getElementById('t-today').textContent=rows.filter(r=>isToday(r.created_at)).length;
+  renderCityChart();
+  renderJetChart();
+  renderHourChart();
+  renderEntries();
+}
+
+function renderCityChart(){
+  const counts={};CITY_ORDER.forEach(k=>counts[k]=0);
+  rows.forEach(r=>{if(counts[r.city_key]!=null)counts[r.city_key]++;});
+  const max=Math.max(1,...Object.values(counts));
+  const el=document.getElementById('city-chart');
+  if(rows.length===0){el.innerHTML='<div class="empty">아직 응답이 없어요.</div>';return;}
+  el.innerHTML=CITY_ORDER.map(k=>{
+    const info=CITY_INFO[k],n=counts[k],pct=Math.round(n/max*100);
+    return `<div class="hrow"><div class="lab">${info.icon} ${info.city}</div><div class="track"><div class="fill" style="width:${pct}%"></div></div><div class="cnt">${n}</div></div>`;
+  }).join('');
+}
+
+function renderJetChart(){
+  const buckets=[[0,1],[1,2],[2,3],[3,4],[4,5],[5,6],[6,8],[8,Infinity]];
+  const labels=['0-1','1-2','2-3','3-4','4-5','5-6','6-8','8+'];
+  const counts=buckets.map(([lo,hi])=>rows.filter(r=>{const h=r.social_jetlag_min/60;return h>=lo&&h<hi;}).length);
+  const max=Math.max(1,...counts);
+  const el=document.getElementById('jet-chart');
+  if(rows.length===0){el.innerHTML='<div class="empty">아직 응답이 없어요.</div>';return;}
+  el.innerHTML=counts.map((n,i)=>{
+    const pct=Math.round(n/max*100);
+    return `<div class="vbar"><div class="n">${n>0?n:''}</div><div class="fill" style="height:${pct}%"></div><div class="x">${labels[i]}h</div></div>`;
+  }).join('');
+}
+
+function renderHourChart(){
+  const today=rows.filter(r=>isToday(r.created_at));
+  const counts=new Array(24).fill(0);
+  today.forEach(r=>{counts[new Date(r.created_at).getHours()]++;});
+  const max=Math.max(1,...counts);
+  const el=document.getElementById('hour-chart');
+  if(today.length===0){el.innerHTML='<div class="empty">오늘 응답이 아직 없어요.</div>';return;}
+  el.innerHTML=counts.map((n,h)=>{
+    const pct=Math.round(n/max*100);
+    const showLabel=h%3===0;
+    return `<div class="vbar" title="${h}시: ${n}건"><div class="n">${n>0?n:''}</div><div class="fill" style="height:${pct}%"></div><div class="x">${showLabel?h+'시':''}</div></div>`;
+  }).join('');
+}
+
+function renderEntries(){
+  const tbody=document.getElementById('entries-body');
+  const latest=rows.slice(0,100);
+  if(latest.length===0){tbody.innerHTML='<tr><td colspan="4" class="empty">아직 응답이 없어요.</td></tr>';return;}
+  tbody.innerHTML=latest.map(r=>{
+    const info=CITY_INFO[r.city_key]||{city:r.city_key,icon:'🌐'};
+    const t=new Date(r.created_at);
+    const hhmm=String(t.getHours()).padStart(2,'0')+':'+String(t.getMinutes()).padStart(2,'0');
+    return `<tr><td>${hhmm}</td><td>${info.icon} ${info.city}</td><td>${fmtH(r.social_jetlag_min)}</td>
+      <td><button onclick="requireAuth(()=>deleteEntry('${r.submission_id}'))">삭제</button></td></tr>`;
+  }).join('');
+}
+
+async function deleteEntry(submissionId){
+  await supa.from('board_events').delete().eq('submission_id',submissionId);
+  await supa.from('research_responses').delete().eq('submission_id',submissionId);
+  await loadAll();
+}
+async function resetToday(){
+  const since=todayStartISO();
+  await supa.from('board_events').delete().gte('created_at',since);
+  await supa.from('research_responses').delete().gte('created_at',since);
+  await loadAll();
+}
+async function resetAll(){
+  const farFuture=new Date(Date.now()+1000*60*60*24*365*50).toISOString();
+  await supa.from('board_events').delete().lt('created_at',farFuture);
+  await supa.from('research_responses').delete().lt('created_at',farFuture);
+  await loadAll();
+}
+
+/* ===== 비밀번호 게이트 — 한 번 맞으면 이 페이지 세션 동안 계속 잠금 해제 ===== */
+let unlocked=false, pendingAction=null;
+function requireAuth(action){
+  if(unlocked){action();return;}
+  pendingAction=action;
+  document.getElementById('pwd-err').textContent='';
+  document.getElementById('pwd-input').value='';
+  document.getElementById('pwd-bg').classList.add('show');
+  setTimeout(()=>document.getElementById('pwd-input').focus(),50);
+}
+function closePwd(){document.getElementById('pwd-bg').classList.remove('show');pendingAction=null;}
+function confirmPwd(){
+  const val=document.getElementById('pwd-input').value;
+  if(val===ADMIN_PASSWORD){
+    unlocked=true;
+    const action=pendingAction;
+    closePwd();
+    if(action)action();
+  }else{
+    document.getElementById('pwd-err').textContent='비밀번호가 틀렸어요.';
+  }
+}
+document.getElementById('pwd-input').addEventListener('keydown',e=>{if(e.key==='Enter')confirmPwd();});
+
+loadAll();
+</script>
+</body>
+</html>

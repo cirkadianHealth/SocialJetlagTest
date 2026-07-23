@@ -428,8 +428,10 @@ async function downloadStory(){
 async function submitAnon(d){
   if(!supa)return;
   const m=h=>Math.round(h*60);
+  const submissionId=(crypto.randomUUID?crypto.randomUUID():'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g,c=>{const r=Math.random()*16|0;return(c==='x'?r:(r&0x3|0x8)).toString(16);}));
   try{
     await supa.from('research_responses').insert({
+      submission_id:submissionId,
       wd_bed_min:m(d.wb), wd_wake_min:m(d.ww), we_bed_min:m(d.eb), we_wake_min:m(d.ew),
       wd_duration_min:m(d.wdDur), we_duration_min:m(d.weDur), avg_sleep_min:m(d.avg),
       weekday_midsleep_min:m(d.wdMid), social_jetlag_min:m(d.jet),
@@ -438,7 +440,7 @@ async function submitAnon(d){
       q_phone:idx('phone'), q_caffeine:idx('caff'), q_sleepy:idx('sleepy'),
       city_key:d.cityKey
     });
-    await supa.from('board_events').insert({city_key:d.cityKey, social_jetlag_min:Math.round(d.jet*60)});
+    await supa.from('board_events').insert({submission_id:submissionId, city_key:d.cityKey, social_jetlag_min:Math.round(d.jet*60)});
   }catch(e){console.warn('anon submit failed',e);}
 }
 
