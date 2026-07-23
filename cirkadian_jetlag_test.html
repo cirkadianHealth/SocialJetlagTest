@@ -1,0 +1,500 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>생체시계 시차 테스트 · CIRKADIAN</title>
+<link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&family=Noto+Sans+KR:wght@400;500;700;900&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<style>
+:root{--ink:#17130D;--orange:#F2A63B;--orange-d:#D9700A;--pale:#FFF3D6;--pale2:#FFE6B3;--muted:#8A7B5E;--pixel:'Press Start 2P',monospace;--kr:'Noto Sans KR',sans-serif}
+*{margin:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+body{background:radial-gradient(1000px 700px at 50% 24%,#FFF8E6,#FFF0CE 60%,#FCE6B0);font-family:var(--kr);color:var(--ink);display:flex;justify-content:center;padding:24px 16px 48px}
+.wrap{width:100%;max-width:600px}
+.mast{text-align:center;margin-bottom:20px}
+.mast .word{font-family:var(--pixel);font-size:20px;letter-spacing:4px}
+.mast .word .k{color:var(--orange-d)}
+.mast .t{font-size:25px;font-weight:900;margin-top:12px;line-height:1.25}
+.mast .s{font-size:13px;color:var(--muted);font-weight:700;margin-top:8px;line-height:1.5}
+
+.panel{background:#fff;border:3px solid var(--ink);box-shadow:6px 6px 0 var(--ink);padding:18px;margin-bottom:16px}
+.bar{background:var(--ink);color:#fff;font-weight:900;font-size:13px;padding:8px 13px;display:inline-block}
+.grp{margin-top:16px}.grp:first-child{margin-top:4px}
+.lbl{font-size:15px;font-weight:900;margin-bottom:10px}.lbl .em{margin-right:6px}
+.times{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.field label{display:block;font-size:12px;font-weight:700;color:var(--muted);margin-bottom:5px}
+button.tsel{width:100%;font-family:var(--pixel);font-size:18px;text-align:center;border:3px solid var(--ink);background:var(--pale);color:var(--ink);padding:12px 6px;box-shadow:3px 3px 0 var(--ink);cursor:pointer}
+button.tsel:focus{outline:none}
+button.tsel.active{background:var(--pale2)}
+
+/* ===== 시간 선택 팝업 (시·분 같이 표시) ===== */
+.tpop-bg{display:none;position:fixed;inset:0;background:rgba(23,19,13,.55);z-index:50;align-items:center;justify-content:center;padding:20px}
+.tpop-bg.show{display:flex}
+.tpop{background:#fff;border:4px solid var(--ink);box-shadow:8px 8px 0 var(--ink);width:100%;max-width:320px;padding:16px}
+.tpop-title{font-weight:900;font-size:14px;text-align:center;margin-bottom:10px}
+.tpop-cols{display:flex;gap:8px;border:3px solid var(--ink);background:var(--pale);height:190px}
+.tpop-col{flex:1;overflow-y:auto;scroll-snap-type:y mandatory;text-align:center}
+.tpop-col::-webkit-scrollbar{width:5px}
+.tpop-item{font-family:var(--pixel);font-size:16px;padding:11px 0;cursor:pointer;scroll-snap-align:center}
+.tpop-item.sel{background:var(--orange);font-weight:900}
+.tpop-sep{display:flex;align-items:center;font-family:var(--pixel);font-size:18px}
+.tpop-ok{width:100%;margin-top:12px;font-family:var(--kr);font-weight:900;font-size:15px;border:3px solid var(--ink);background:var(--orange);color:var(--ink);padding:11px;box-shadow:3px 3px 0 var(--ink);cursor:pointer}
+.tpop-ok:active{transform:translate(2px,2px);box-shadow:1px 1px 0 var(--ink)}
+
+.q{margin-top:18px}
+.q .qt{font-size:15px;font-weight:900;margin-bottom:9px}
+.opts{display:flex;flex-wrap:wrap;gap:8px}
+.opt{font-family:var(--kr);font-weight:700;font-size:14px;border:3px solid var(--ink);background:#fff;color:var(--ink);padding:10px 13px;cursor:pointer;box-shadow:3px 3px 0 var(--ink)}
+.opt.sel{background:var(--orange);}
+.opt:active{transform:translate(2px,2px);box-shadow:1px 1px 0 var(--ink)}
+
+.namerow{margin-top:18px}
+.namerow input{width:100%;font-weight:700;font-size:16px;border:3px solid var(--ink);background:#fff;padding:12px 13px;box-shadow:3px 3px 0 var(--ink)}
+.namerow input:focus{outline:none;background:var(--pale)}
+.btn{width:100%;font-family:var(--kr);font-weight:900;font-size:19px;border:3px solid var(--ink);background:var(--orange);color:var(--ink);padding:17px;box-shadow:5px 5px 0 var(--ink);cursor:pointer}
+.btn:active{transform:translate(3px,3px);box-shadow:2px 2px 0 var(--ink)}
+.btn.alt{background:#fff;font-size:16px;padding:14px;margin-top:14px}
+
+/* ===== 결과지 ===== */
+#result{display:none}
+.sheet{background:#fff;border:4px solid var(--ink);box-shadow:8px 8px 0 var(--ink);padding:20px 18px}
+.rmast{text-align:center;border-bottom:3px solid var(--ink);padding-bottom:10px;margin-bottom:14px}
+.rmast .w{font-family:var(--pixel);font-size:22px;letter-spacing:3px}.rmast .w .k{color:var(--orange-d)}
+.rmast .sub{font-size:11px;font-weight:700;color:var(--muted);margin-top:6px}
+.hero{display:grid;grid-template-columns:1fr 1fr;gap:12px;align-items:center}
+.hero .you{font-size:13px;font-weight:700;color:var(--muted)}
+.hero .city{font-size:34px;font-weight:900;line-height:1.1;margin:2px 0 4px}
+.hero .lm{font-family:var(--pixel);font-size:11px;color:var(--orange-d);margin-bottom:8px}
+.tags{display:flex;flex-wrap:wrap;gap:6px}
+.tags span{background:var(--ink);color:#fff;font-size:11px;font-weight:700;padding:5px 9px}
+.portrait{border:3px solid var(--ink);background:var(--pale);display:flex;flex-direction:column;align-items:center;justify-content:center;padding:14px;min-height:150px;background-image:linear-gradient(var(--pale2) 1px,transparent 1px),linear-gradient(90deg,var(--pale2) 1px,transparent 1px);background-size:11px 11px}
+.portrait .em{font-size:78px;line-height:1;filter:drop-shadow(3px 3px 0 rgba(0,0,0,.15))}
+.portrait .flag{font-size:22px;margin-top:6px}
+
+.jetbox{background:var(--ink);color:#fff;text-align:center;padding:10px;margin:10px 0}
+.jetbox .k{font-size:12px;font-weight:700;color:var(--pale2);letter-spacing:1px}
+.jetbox .v{font-family:var(--pixel);font-size:26px;color:var(--orange);margin-top:8px}
+
+.explain{font-size:13.5px;font-weight:700;line-height:1.55;background:var(--pale);border:3px solid var(--ink);padding:12px 13px;margin-bottom:10px}
+.explain b{color:var(--orange-d)}
+
+.insights{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin:8px 0 2px}
+.ins{border:3px solid var(--ink);padding:9px 11px}
+.ins .h{font-size:12px;font-weight:900;color:var(--orange-d);margin-bottom:5px}
+.ins .h .em{margin-right:5px}
+.ins .b{font-size:11.5px;line-height:1.45;font-weight:500}
+.ins .b b{color:var(--ink);font-weight:900}
+.block{margin-top:10px}
+.block .body{border:3px solid var(--ink);border-top:none;padding:11px}
+svg.radar{width:100%;height:auto;display:block}
+
+.guide{display:grid;grid-template-columns:auto 1fr;border:3px solid var(--ink);margin-top:9px}
+.guide .lab{background:var(--ink);color:#fff;font-weight:900;font-size:12px;display:flex;align-items:center;padding:0 12px;text-align:center;line-height:1.3}
+.guide .gbody{padding:9px 12px;font-size:12px;line-height:1.55}
+.guide .gbody b{color:var(--orange-d)}
+
+.trio{display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;margin-top:9px}
+.stat .body{text-align:center;min-height:66px;display:flex;flex-direction:column;justify-content:center}
+.stat .big{font-size:16px;font-weight:900;color:var(--orange-d)}
+.stat .big.px{font-family:var(--pixel);font-size:13px}
+.stat .sm{font-size:10.5px;color:var(--muted);font-weight:700;margin-top:3px}
+
+.rfoot{margin-top:10px;border-top:3px solid var(--ink);padding-top:8px;display:flex;justify-content:space-between;align-items:center}
+.rfoot .big{font-family:var(--pixel);font-size:11px}.rfoot .big b{color:var(--orange-d)}
+#qr{width:60px;height:60px;border:2px solid var(--ink);padding:2px;background:#fff}
+#qr img,#qr canvas{width:100%!important;height:100%!important;display:block}
+.disc{font-size:9.5px;color:var(--muted);text-align:center;margin-top:8px;line-height:1.4}
+
+/* ===== 인스타 스토리용 카드 (9:16, 화면 밖에서 렌더링 후 캡처) ===== */
+#storyCard{position:fixed;left:-4000px;top:0;width:540px;height:960px;box-sizing:border-box;background:linear-gradient(180deg,#FFF8E6,#FCE6B0);color:var(--ink);font-family:var(--kr);display:flex;flex-direction:column;align-items:center;padding:56px 40px;text-align:center}
+#storyCard .sw{font-family:var(--pixel);font-size:26px;letter-spacing:4px}
+#storyCard .sw .k{color:var(--orange-d)}
+#storyCard .ssub{font-size:14px;font-weight:700;color:var(--muted);margin-top:6px;letter-spacing:1px}
+#storyCard .scard{margin-top:54px;background:#fff;border:5px solid var(--ink);box-shadow:10px 10px 0 var(--ink);width:100%;padding:34px 26px;box-sizing:border-box}
+#storyCard .syou{font-size:15px;font-weight:700;color:var(--muted)}
+#storyCard .sem{font-size:96px;line-height:1;margin:14px 0}
+#storyCard .scity{font-size:40px;font-weight:900}
+#storyCard .sflag{font-size:26px;margin-top:6px}
+#storyCard .sjetbox{margin-top:26px;background:var(--ink);color:#fff;text-align:center;padding:20px 22px;width:100%;box-sizing:border-box}
+#storyCard .sjetbox .k{font-size:14px;font-weight:700;color:var(--pale2);letter-spacing:1px}
+#storyCard .sjetbox .v{font-family:var(--pixel);font-size:32px;color:var(--orange);margin-top:10px}
+#storyCard .sexplain{margin-top:24px;font-size:18px;font-weight:700;line-height:1.6}
+#storyCard .sexplain b{color:var(--orange-d)}
+#storyCard .sfoot{margin-top:auto;padding-top:26px}
+#storyCard .sfoot .st{font-family:var(--pixel);font-size:13px;color:var(--orange-d)}
+#storyCard .sfoot .sqr{margin:10px auto 0;width:90px;height:90px;border:3px solid var(--ink);background:#fff;padding:4px}
+#storyCard .sfoot .sqr img,#storyCard .sfoot .sqr canvas{width:100%!important;height:100%!important;display:block}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="mast">
+    <div class="word">CIR<span class="k">K</span>ADIAN</div>
+    <div class="t">당신의 몸은 지금 어느 도시에 있나요? ✈️</div>
+  </div>
+
+  <div id="input">
+    <div class="panel">
+      <span class="bar">⏰ 평일 vs 주말 수면</span>
+      <div class="grp">
+        <div class="lbl"><span class="em">💼</span>평일 (월~금)</div>
+        <div class="times">
+          <div class="field"><label>잠드는 시각</label><button type="button" class="tsel" id="wd-bed"></button></div>
+          <div class="field"><label>일어나는 시각</label><button type="button" class="tsel" id="wd-wake"></button></div>
+        </div>
+      </div>
+      <div class="grp">
+        <div class="lbl"><span class="em">🎉</span>주말 (토·일)</div>
+        <div class="times">
+          <div class="field"><label>잠드는 시각</label><button type="button" class="tsel" id="we-bed"></button></div>
+          <div class="field"><label>일어나는 시각</label><button type="button" class="tsel" id="we-wake"></button></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="panel">
+      <span class="bar">😴 수면 습관</span>
+      <div id="survey"></div>
+    </div>
+
+    <div class="panel">
+      <p style="font-size:11.5px;color:var(--muted);line-height:1.5;margin-bottom:2px">응답은 이름·연락처 없이 완전 익명으로 저장되며, 수면 연구 목적으로만 사용돼요.</p>
+      <button class="btn" style="margin-top:16px" onclick="run()">내 리포트 보기 ✈️</button>
+    </div>
+  </div>
+
+  <div id="result">
+    <div class="sheet" id="sheet">
+      <div class="rmast"><div class="w">CIR<span class="k">K</span>ADIAN</div><div class="sub">생체시계 시차 리포트 · SOCIAL JETLAG REPORT</div></div>
+      <div class="hero">
+        <div>
+          <div class="you">당신의 몸은 지금…</div>
+          <div class="city" id="r-city">서울</div>
+          <div class="lm" id="r-lm">남산서울타워</div>
+          <div class="tags" id="r-tags"></div>
+        </div>
+        <div class="portrait"><div class="em" id="r-em">🗼</div><div class="flag" id="r-flag">🇰🇷</div></div>
+      </div>
+      <div class="jetbox"><div class="k">당신의 사회적 시차</div><div class="v" id="r-jet">0시간 0분</div></div>
+      <div class="explain" id="r-explain"></div>
+      <div class="insights" id="r-insights"></div>
+      <div class="block"><span class="bar">수면 습관 프로파일</span><div class="body"><svg class="radar" id="r-radar" viewBox="0 0 300 210"></svg></div></div>
+      <div class="guide"><div class="lab">리듬<br>처방</div><div class="gbody" id="r-coach"></div></div>
+      <div class="trio">
+        <div class="stat"><span class="bar">🛌 평균 수면</span><div class="body"><div class="big px" id="r-avg">7:00</div><div class="sm">하루 평균</div></div></div>
+        <div class="stat"><span class="bar">🕐 크로노타입</span><div class="body"><div class="big" id="r-chrono">중간형</div><div class="sm" id="r-chrono2">수면 중간점</div></div></div>
+        <div class="stat"><span class="bar">💯 수면 습관</span><div class="body"><div class="big" id="r-score">양호</div><div class="sm" id="r-score2">-- / 100</div></div></div>
+      </div>
+      <div class="rfoot"><div class="big">당신의 <b>리듬</b>을 찾아보세요</div><div id="qr"></div></div>
+      <p class="disc">설문 기반 참고용 리포트예요. 재미·습관 점검용이며 의학적 진단이 아닙니다. 정확한 예측은 심박 기반 CIRKADIAN 앱에서.</p>
+    </div>
+    <div style="display:flex;gap:10px;margin-top:14px">
+      <button class="btn alt" style="margin-top:0;flex:1" onclick="downloadStory()">📸 스토리로 저장</button>
+      <button class="btn alt" style="margin-top:0;flex:1" onclick="location.reload()">다시 하기 🔄</button>
+    </div>
+  </div>
+</div>
+
+<div id="storyCard">
+  <div class="sw">CIR<span class="k">K</span>ADIAN</div>
+  <div class="ssub">SOCIAL JETLAG REPORT</div>
+  <div class="scard">
+    <div class="syou">당신의 몸은 지금…</div>
+    <div class="sem" id="story-em">🗼</div>
+    <div class="scity" id="story-city">서울</div>
+    <div class="sflag" id="story-flag">🇰🇷</div>
+  </div>
+  <div class="sjetbox"><div class="k">사회적 시차</div><div class="v" id="story-jet">0시간 0분</div></div>
+  <div class="sexplain" id="story-explain"></div>
+  <div class="sfoot">
+    <div class="st">나도 테스트하기 →</div>
+    <div class="sqr" id="story-qr"></div>
+  </div>
+</div>
+
+<div class="tpop-bg" id="tpop-bg" onclick="if(event.target===this)closeTimePopup(false)">
+  <div class="tpop">
+    <div class="tpop-title">시각 선택</div>
+    <div class="tpop-cols">
+      <div class="tpop-col" id="tpop-h"></div>
+      <div class="tpop-sep">:</div>
+      <div class="tpop-col" id="tpop-m"></div>
+    </div>
+    <button type="button" class="tpop-ok" onclick="closeTimePopup(true)">확인</button>
+  </div>
+</div>
+
+<script>
+/* ===== Supabase (익명 데이터 저장) =====
+   Supabase 프로젝트를 만든 뒤 Project Settings > API 에서
+   Project URL / anon public key를 아래에 채워 넣으세요.
+   supabase/schema.sql 을 SQL Editor에서 먼저 실행해야 합니다. */
+const SUPABASE_URL='https://kbfvjlhpnjqhlofvwvab.supabase.co';
+const SUPABASE_ANON_KEY='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImtiZnZqbGhwbmpxaGxvZnZ3dmFiIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODQ2MjU5OTUsImV4cCI6MjEwMDIwMTk5NX0.-1Zb0ekBO5A0f-Mznv9XMa6pdLhaPTWHztmorfD06JA';
+let supa=null;
+try{
+  if(window.supabase && !SUPABASE_URL.includes('YOUR-PROJECT')){
+    supa=window.supabase.createClient(SUPABASE_URL,SUPABASE_ANON_KEY);
+  }
+}catch(_){}
+
+const CITIES=[
+  {key:'SEL',city:'서울',lm:'남산서울타워',flag:'🇰🇷',icon:'🗼',max:0.4,quip:'생체시계 시차 0. 이 구역의 갓생러',
+    explain:'이번 주는 어디로도 안 떠나고 그대로 <b>서울</b>에 머물러 있어요. 리듬이 안 흔들려서 몸이 편안한 거예요.'},
+  {key:'PEK',city:'베이징',lm:'자금성',flag:'🇨🇳',icon:'🏯',max:0.9,quip:'살짝 어긋난 시계. 주말에 늦잠 좀 잤죠?',
+    explain:'당신은 주말마다 옆나라 <b>중국 베이징</b>으로 살짝 마실 다녀오는 셈이에요. 그 정도로 살짝 피곤한 거예요.'},
+  {key:'BKK',city:'방콕',lm:'왓 아룬',flag:'🇹🇭',icon:'🛕',max:1.5,quip:'몸은 이미 동남아 휴양 모드',
+    explain:'당신은 주말마다 <b>동남아 방콕</b>으로 여행을 다녀오는 셈이에요. 그래서 피곤한 거예요.'},
+  {key:'DEL',city:'델리',lm:'타지마할',flag:'🇮🇳',icon:'🕌',max:2.1,quip:'몸의 절반은 인도 어딘가를 여행 중',
+    explain:'당신은 주말마다 <b>인도 델리</b>로 여행을 다녀오는 셈이에요. 그래서 몸이 무거운 거예요.'},
+  {key:'DXB',city:'두바이',lm:'부르즈 할리파',flag:'🇦🇪',icon:'🏙️',max:2.75,quip:'몸만 중동에 두고 오셨네요',
+    explain:'당신은 주말마다 <b>중동 두바이</b>로 출장을 다녀오는 셈이에요. 그래서 피곤한 거예요.'},
+  {key:'NBO',city:'나이로비',lm:'마사이마라',flag:'🇰🇪',icon:'🦁',max:3.25,quip:'몸은 이미 아프리카 사파리 중',
+    explain:'당신은 주말마다 <b>아프리카 나이로비</b>로 여행을 다녀오는 셈이에요. 그래서 피곤한 거예요.'},
+  {key:'MOW',city:'모스크바',lm:'크렘린',flag:'🇷🇺',icon:'🏰',max:3.75,quip:'매주 시베리아 횡단 중. 몸이 고생이 많아요',
+    explain:'당신은 주말마다 시베리아를 건너 <b>러시아 모스크바</b>까지 다녀오는 셈이에요. 몸이 남아나질 않죠.'},
+  {key:'ROM',city:'로마',lm:'콜로세움',flag:'🇮🇹',icon:'🏛️',max:4.75,quip:'생체시계는 이미 로마에서 휴가 중',
+    explain:'당신은 주말마다 <b>유럽 로마</b>로 여행을 다녀오는 셈이에요. 시차 적응할 틈이 없는 거예요.'},
+  {key:'LON',city:'런던',lm:'런던 아이',flag:'🇬🇧',icon:'🎡',max:6.5,quip:'생체시계가 유럽으로 이민 갔습니다',
+    explain:'당신은 주말마다 <b>영국 런던</b>으로 출장을 다녀오는 셈이에요. 생체시계가 아예 다른 대륙에 사는 거예요.'},
+  {key:'NYC',city:'뉴욕',lm:'자유의 여신상',flag:'🇺🇸',icon:'🗽',max:8.5,quip:'낮과 밤이 뒤집힘. 지구 반대편 라이프',
+    explain:'당신은 주말마다 <b>미국 뉴욕</b>으로 여행을 다녀오는 셈이에요. 낮과 밤이 통째로 뒤바뀐 삶을 살고 있는 거예요.'},
+  {key:'SFO',city:'샌프란시스코',lm:'골든게이트 브리지',flag:'🇺🇸',icon:'🌉',max:99,quip:'시계가 태평양을 건넜어요. 역대급 시차',
+    explain:'당신은 주말마다 태평양을 건너 <b>미국 서부</b>까지 다녀오는 셈이에요. 매주 시차 적응 중인 몸인 거죠.'},
+];
+function cityFor(h){for(const c of CITIES)if(h<=c.max)return c;return CITIES[CITIES.length-1];}
+const clamp=(v,a,b)=>Math.max(a,Math.min(b,v));
+function dec(s){const[h,m]=s.split(':').map(Number);return h+m/60;}
+function dur(bed,wake){let d=(wake-bed+24)%24;if(d===0)d=8;return d;}
+function midsleep(bed,wake){return (bed+dur(bed,wake)/2)%24;}
+function fmtH(h){const m=Math.round(h*60);const H=Math.floor(m/60),M=m%60;return H>0?`${H}시간 ${M}분`:`${M}분`;}
+function hhmm(h){const m=Math.round(h*60);return Math.floor(m/60)+':'+String(m%60).padStart(2,'0');}
+
+/* 설문 */
+const QS=[
+ {id:'lat',q:'잠들기까지 얼마나?',o:[['5분 안에 기절',68],['5~15분',95],['15~30분',100],['30분~1시간',55],['1시간+ 뒤척',25]]},
+ {id:'night',q:'자다가 얼마나 깨요?',o:[['거의 안 깸',100],['가끔',70],['매일 한번씩',55],['자주',35]]},
+ {id:'morning',q:'아침 기상은?',o:[['한 번에 벌떡',100],['알람 몇 번',60],['겨우겨우',30]]},
+ {id:'phone',q:'잘 때 스마트폰',o:[['거의 안 봄',100],['30분쯤',65],['1시간+',35],['잠들 때까지',15]]},
+ {id:'caff',q:'마지막 카페인은?',o:[['안 마심',100],['점심 전까지',95],['오후 1~4시',72],['오후 5~7시',48],['저녁 8시 이후',25]]},
+ {id:'sleepy',q:'낮에 졸린가요?',o:[['거의 안 졸림',100],['가끔',65],['자주 꾸벅',30]]},
+];
+const ans={};
+function renderSurvey(){
+  document.getElementById('survey').innerHTML=QS.map(Q=>
+    `<div class="q"><div class="qt">${Q.q}</div><div class="opts">${
+      Q.o.map((o,i)=>`<button class="opt" data-q="${Q.id}" data-i="${i}" data-s="${o[1]}" onclick="pick('${Q.id}',${i},${o[1]},this)">${o[0]}</button>`).join('')
+    }</div></div>`).join('');
+}
+function pick(id,i,s,el){ans[id]={i,s};el.parentNode.querySelectorAll('.opt').forEach(b=>b.classList.remove('sel'));el.classList.add('sel');}
+function sc(id){return ans[id]?ans[id].s:60;}
+function idx(id){return ans[id]?ans[id].i:-1;}
+
+const RLAB=['규칙성','빛 위생','입면','수면 유지','상쾌한 기상','각성 관리'];
+function run(){
+  const wb=dec(v('wd-bed')),ww=dec(v('wd-wake')),eb=dec(v('we-bed')),ew=dec(v('we-wake'));
+  const wdDur=dur(wb,ww), weDur=dur(eb,ew);
+  const wdMid=midsleep(wb,ww),weMid=midsleep(eb,ew);
+  let jet=Math.abs(weMid-wdMid);jet=Math.min(jet,24-jet);
+  const avg=(dur(wb,ww)*5+dur(eb,ew)*2)/7;
+  const c=cityFor(jet);
+
+  const regS=clamp(100-jet*22,0,100);
+  const lenS=clamp(100-Math.abs(avg-7.5)*18,0,100);
+  const vals=[regS, sc('phone'), sc('lat'), sc('night'), sc('morning'), sc('caff')];
+  const score=Math.round(0.20*regS+0.18*sc('phone')+0.10*sc('lat')+0.16*sc('night')+0.12*sc('morning')+0.10*sc('caff')+0.10*sc('sleepy')+0.04*lenS);
+  const sLab=score>=80?'최상':score>=60?'양호':score>=40?'주의':'위험';
+
+  // 크로노타입
+  let chrono='중간형',cdesc='딱 중간 리듬';
+  if(wdMid<2.8){chrono='종달새형';cdesc='아침형 인간';}
+  else if(wdMid<4.2){chrono='중간형';cdesc='평균 리듬';}
+  else if(wdMid<5.6){chrono='올빼미형';cdesc='저녁형 인간';}
+  else{chrono='극야행성';cdesc='밤의 지배자';}
+
+  // 태그
+  const tags=[];
+  if(wdMid>=4.2)tags.push('#야행성');
+  if(jet>=2)tags.push('#주말몰아잠');
+  if(idx('phone')>=2)tags.push('#자기전_폰');
+  if(idx('caff')===2)tags.push('#카페인의존');
+  if(avg<6)tags.push('#수면부족');
+  if(sc('night')>=100&&sc('lat')>=100)tags.push('#꿀잠');
+  if(tags.length===0)tags.push('#균형리듬');
+
+  document.getElementById('r-explain').innerHTML=c.explain;
+
+  // 처방(코칭) — 짧게 두 문장
+  function clk(h){h=((h%24)+24)%24;const m=Math.round(h*60);let H=Math.floor(m/60),M=m%60;const p=H<12?'오전':'오후';let h12=H%12;if(h12===0)h12=12;return `${p} ${h12}시`+(M?` ${M}분`:'');}
+  const targetBed = jet>=1 ? wb-Math.min(1,jet*0.5) : wb;   // 취침 목표(시차 클수록 앞당김)
+  const targetWake = ww;                                     // 기상은 유지
+  const lightBy = clk(targetWake+0.25);                      // 기상 후 15분 내 햇빛
+  let coach='';
+  coach += jet>=1
+    ? `주말에도 <b>기상 ${clk(targetWake)}</b>을 지키고, 취침을 매일 15분씩 앞당겨 <b>${clk(targetBed)}</b>까지 당겨보세요. `
+    : `지금의 <b>취침 ${clk(wb)} / 기상 ${clk(ww)}</b> 리듬을 그대로 유지하는 게 최고의 관리예요. `;
+  coach += idx('phone')>=2
+    ? '자기 전 스마트폰 화면만 줄여도 훨씬 쉽게 잠들어요.'
+    : `기상 후 <b>${lightBy}</b>까지 햇빛 15분이면 저녁에 더 잘 잠들어요.`;
+  document.getElementById('r-coach').innerHTML=coach;
+
+  // 채우기
+  document.getElementById('r-city').textContent=c.city;
+  document.getElementById('r-lm').textContent=c.icon+' '+c.lm;
+  document.getElementById('r-em').textContent=c.icon;
+  document.getElementById('r-flag').textContent=c.flag;
+  document.getElementById('r-jet').textContent=fmtH(jet);
+  document.getElementById('r-tags').innerHTML=tags.slice(0,3).map(t=>`<span>${t}</span>`).join('');
+  document.getElementById('r-avg').textContent=hhmm(avg);
+  document.getElementById('r-chrono').textContent=chrono;
+  document.getElementById('r-chrono2').textContent=cdesc;
+  document.getElementById('r-score').textContent=sLab;
+  document.getElementById('r-score2').textContent=score+' / 100';
+
+  // ── 의외의 발견 계산 ──
+  const idealSleep=7.5;
+  const weekDebt=Math.max(0,(idealSleep-wdDur))*5; // 평일 5일치 누적 부채(시간)
+  const catchUp=Math.max(0,(weDur-wdDur))*2;       // 주말에 더 잔 양(2일치)
+  const CAFF={0:null,1:11,2:14.5,3:18,4:20.5};     // 선택지 인덱스→마지막 카페인 시각(대략)
+  const caffIdx=idx('caff'); const caffHour=CAFF[caffIdx];
+  function halfLifeLeft(caffH,bedH){
+    if(caffH==null)return null;
+    let bh=bedH<12?bedH+24:bedH;     // 새벽 취침은 다음날로
+    let gap=bh-caffH; if(gap<0)gap+=24;
+    const remain=Math.pow(0.5, gap/5); // 반감기 5h
+    return {gap,pct:Math.round(remain*100)};
+  }
+  const caff=halfLifeLeft(caffHour,wb);
+
+  const ins=[];
+  // ① 숨은 수면부채 / 주말 몰아자기
+  if(weekDebt>=2 || catchUp>=2){
+    ins.push(['🛌','숨은 수면 빚',
+      `평일 <b>${fmtH(wdDur)}</b> · 주말 <b>${fmtH(weDur)}</b>. 주말 늦잠은 쉬는 게 아니라 평일에 쌓인 <b>수면 빚을 갚는 중</b>이에요.`]);
+  } else {
+    ins.push(['🛌','수면량 밸런스',
+      `평일 <b>${fmtH(wdDur)}</b> · 주말 <b>${fmtH(weDur)}</b>. 큰 차이가 없어 <b>수면 빚 없이</b> 잘 관리되고 있어요.`]);
+  }
+  // ② 카페인 남은 시간 (간격 기준으로 경고/칭찬 분기)
+  if(caffIdx===0){
+    ins.push(['☕','카페인 청정',
+      `카페인을 안 드시네요. 입면과 깊은잠에 <b>유리한 조건</b>이에요.`]);
+  } else if(caff && caff.gap < 6 && caff.pct>=20){
+    ins.push(['☕','잠들 때 남은 카페인',
+      `마지막 카페인 뒤 <b>${caff.gap.toFixed(0)}시간</b> 만에 잠드는데, 아직 <b>약 ${caff.pct}%</b>가 남아 있어요. <b>취침 6시간 전</b>까지만 마셔보세요.`]);
+  } else {
+    ins.push(['☕','카페인 타이밍 굿',
+      `마지막 카페인과 취침 사이가 <b>${caff?caff.gap.toFixed(0)+'시간':'충분히'}</b> 떨어져 있어서 <b>타이밍을 잘 지키고</b> 계세요.`]);
+  }
+  document.getElementById('r-insights').innerHTML=ins.map(a=>
+    `<div class="ins"><div class="h"><span class="em">${a[0]}</span>${a[1]}</div><div class="b">${a[2]}</div></div>`).join('');
+
+  drawRadar(vals);
+
+  document.getElementById('input').style.display='none';
+  document.getElementById('result').style.display='block';
+  window.scrollTo(0,0);
+  try{new QRCode(document.getElementById('qr'),{text:'https://instagram.com/cirkadianofficial',width:56,height:56,colorDark:'#17130D',colorLight:'#fff',correctLevel:QRCode.CorrectLevel.M});}catch(_){}
+  fillStoryCard(c,jet);
+
+  // 부스 모니터(같은 브라우저로 테스트할 때만 동작) + Supabase 익명 저장
+  try{new BroadcastChannel('cirkadian').postMessage({hours:jet});}catch(_){}
+  submitAnon({wb,ww,eb,ew,wdDur,weDur,avg,wdMid,jet,chrono,score,cityKey:c.key});
+}
+function v(id){return document.getElementById(id).dataset.value;}
+
+function fillStoryCard(c,jet){
+  document.getElementById('story-em').textContent=c.icon;
+  document.getElementById('story-city').textContent=c.city;
+  document.getElementById('story-flag').textContent=c.flag;
+  document.getElementById('story-jet').textContent=fmtH(jet);
+  document.getElementById('story-explain').innerHTML=c.explain;
+  const qrBox=document.getElementById('story-qr');
+  qrBox.innerHTML='';
+  try{new QRCode(qrBox,{text:location.href.split('?')[0],width:82,height:82,colorDark:'#17130D',colorLight:'#fff',correctLevel:QRCode.CorrectLevel.M});}catch(_){}
+}
+async function downloadStory(){
+  try{
+    const canvas=await html2canvas(document.getElementById('storyCard'),{scale:2,backgroundColor:'#FFF3D6'});
+    const link=document.createElement('a');
+    link.download='cirkadian_jetlag_story.png';
+    link.href=canvas.toDataURL('image/png');
+    link.click();
+  }catch(e){
+    alert('이미지 저장에 실패했어요. 화면을 스크린샷으로 저장해주세요.');
+  }
+}
+
+async function submitAnon(d){
+  if(!supa)return;
+  const m=h=>Math.round(h*60);
+  try{
+    await supa.from('research_responses').insert({
+      wd_bed_min:m(d.wb), wd_wake_min:m(d.ww), we_bed_min:m(d.eb), we_wake_min:m(d.ew),
+      wd_duration_min:m(d.wdDur), we_duration_min:m(d.weDur), avg_sleep_min:m(d.avg),
+      weekday_midsleep_min:m(d.wdMid), social_jetlag_min:m(d.jet),
+      chronotype:d.chrono, sleep_score:d.score,
+      q_latency:idx('lat'), q_night:idx('night'), q_morning:idx('morning'),
+      q_phone:idx('phone'), q_caffeine:idx('caff'), q_sleepy:idx('sleepy'),
+      city_key:d.cityKey
+    });
+    await supa.from('board_events').insert({city_key:d.cityKey, social_jetlag_min:Math.round(d.jet*60)});
+  }catch(e){console.warn('anon submit failed',e);}
+}
+
+function drawRadar(vals){
+  const cx=150,cy=102,R=72,N=6,svg=document.getElementById('r-radar');
+  const pt=(i,r)=>{const a=-Math.PI/2+i*2*Math.PI/N;return[cx+r*Math.cos(a),cy+r*Math.sin(a)];};
+  let g='';
+  [0.25,0.5,0.75,1].forEach(f=>{let p='';for(let i=0;i<N;i++){const[x,y]=pt(i,R*f);p+=(i?'L':'M')+x.toFixed(1)+' '+y.toFixed(1);}g+=`<path d="${p}Z" fill="none" stroke="#E5D3A8" stroke-width="1"/>`;});
+  for(let i=0;i<N;i++){const[x,y]=pt(i,R);g+=`<line x1="${cx}" y1="${cy}" x2="${x.toFixed(1)}" y2="${y.toFixed(1)}" stroke="#E5D3A8" stroke-width="1"/>`;}
+  let poly='';for(let i=0;i<N;i++){const[x,y]=pt(i,R*vals[i]/100);poly+=(i?'L':'M')+x.toFixed(1)+' '+y.toFixed(1);}
+  g+=`<path d="${poly}Z" fill="#F2A63B" fill-opacity="0.42" stroke="#D9700A" stroke-width="2.5" stroke-linejoin="round"/>`;
+  for(let i=0;i<N;i++){const[x,y]=pt(i,R*vals[i]/100);g+=`<circle cx="${x.toFixed(1)}" cy="${y.toFixed(1)}" r="2.6" fill="#D9700A"/>`;}
+  for(let i=0;i<N;i++){const[x,y]=pt(i,R+15);const an=Math.abs(x-cx)<6?'middle':(x>cx?'start':'end');g+=`<text x="${x.toFixed(1)}" y="${(y+4).toFixed(1)}" font-family="Noto Sans KR" font-size="10.5" font-weight="700" fill="#17130D" text-anchor="${an}">${RLAB[i]}</text>`;}
+  svg.innerHTML=g;
+}
+renderSurvey();
+
+// 시각 선택 팝업 — 시/분 목록이 한 화면에 같이 뜨고, 분은 10분 단위로만 선택 가능
+const TIME_DEFAULTS={'wd-bed':'00:30','wd-wake':'07:00','we-bed':'01:30','we-wake':'10:00'};
+const HOURS=[...Array(24).keys()].map(h=>String(h).padStart(2,'0'));
+const MINS=['00','10','20','30','40','50'];
+const tpopH=document.getElementById('tpop-h'), tpopM=document.getElementById('tpop-m'), tpopBg=document.getElementById('tpop-bg');
+tpopH.innerHTML=HOURS.map(h=>`<div class="tpop-item" data-v="${h}">${h}</div>`).join('');
+tpopM.innerHTML=MINS.map(m=>`<div class="tpop-item" data-v="${m}">${m}</div>`).join('');
+function selectCol(col,el){if(!el)return;col.querySelectorAll('.tpop-item').forEach(x=>x.classList.remove('sel'));el.classList.add('sel');}
+tpopH.querySelectorAll('.tpop-item').forEach(el=>el.addEventListener('click',()=>selectCol(tpopH,el)));
+tpopM.querySelectorAll('.tpop-item').forEach(el=>el.addEventListener('click',()=>selectCol(tpopM,el)));
+
+let activeField=null;
+function setFieldValue(btn,val){btn.dataset.value=val;btn.textContent=val;}
+document.querySelectorAll('button.tsel').forEach(btn=>{
+  setFieldValue(btn,TIME_DEFAULTS[btn.id]||'00:00');
+  btn.addEventListener('click',()=>openTimePopup(btn));
+});
+function openTimePopup(btn){
+  activeField=btn;
+  const [h,m]=btn.dataset.value.split(':');
+  selectCol(tpopH, tpopH.querySelector(`[data-v="${h}"]`));
+  selectCol(tpopM, tpopM.querySelector(`[data-v="${m}"]`));
+  tpopBg.classList.add('show');
+  requestAnimationFrame(()=>{
+    tpopH.querySelector('.sel')?.scrollIntoView({block:'center'});
+    tpopM.querySelector('.sel')?.scrollIntoView({block:'center'});
+  });
+}
+function closeTimePopup(commit){
+  if(commit && activeField){
+    const h=tpopH.querySelector('.sel')?.dataset.v||'00';
+    const m=tpopM.querySelector('.sel')?.dataset.v||'00';
+    setFieldValue(activeField, h+':'+m);
+  }
+  tpopBg.classList.remove('show');
+  activeField=null;
+}
+</script>
+</body>
+</html>

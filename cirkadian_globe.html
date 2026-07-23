@@ -1,0 +1,401 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>CIRKADIAN · 당신의 몸은 지금 어느 도시에?</title>
+<link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&family=Noto+Sans+KR:wght@400;500;700;900&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<style>
+:root{--ink:#17130D;--orange:#F2A63B;--orange-d:#D9700A;--gold:#E8863B;--pale:#FFF3D6;--pale2:#FFE6B3;--muted:#8A7B5E;--pixel:'Press Start 2P',monospace;--kr:'Noto Sans KR',sans-serif}
+*{margin:0;box-sizing:border-box}
+html,body{height:100%;overflow:hidden;font-family:var(--kr);color:var(--ink)}
+body{background:radial-gradient(1400px 900px at 50% 40%,#FFF8E6 0%,#FFF0CE 55%,#FCE6B0 100%)}
+#app{position:fixed;inset:0}
+canvas{display:block}
+
+.mast{position:fixed;top:0;left:0;right:0;padding:22px;text-align:center;z-index:5;pointer-events:none}
+.mast .word{font-family:var(--pixel);font-size:30px;letter-spacing:5px;color:var(--ink)}
+.mast .word .k{color:var(--orange-d)}
+.mast .sub{display:inline-block;color:var(--ink);font-weight:900;font-size:40px;letter-spacing:.5px;line-height:1.2}
+.mast .en{display:block;margin-top:12px;font-family:var(--pixel);font-size:15px;color:var(--orange-d);letter-spacing:2px}
+
+.panel{background:#fff;border:3px solid var(--ink);box-shadow:5px 5px 0 var(--ink)}
+.bar{background:var(--ink);color:#fff;font-weight:900;font-size:13px;padding:8px 14px;letter-spacing:1px}
+
+.board{position:fixed;top:150px;right:34px;width:310px;z-index:5}
+.board .body{padding:14px}
+.king{display:flex;align-items:center;gap:12px;background:var(--pale);border:3px solid var(--ink);padding:12px 14px;margin-bottom:14px;box-shadow:3px 3px 0 var(--ink)}
+.king .medal{font-size:34px;line-height:1}
+.king .kt{flex:1}
+.king .kt .kc{font-size:20px;font-weight:900}
+.king .kt .kh{font-family:var(--pixel);font-size:12px;color:var(--orange-d);margin-top:4px}
+.king .kt .kn{font-size:12px;color:var(--muted);font-weight:700;margin-top:3px}
+.list{display:flex;flex-direction:column;gap:8px}
+.row{display:flex;align-items:center;gap:9px;font-size:14px}
+.row .em{font-size:19px;line-height:1}
+.row .city{flex:1;font-weight:900}
+.row .cnt{font-family:var(--pixel);color:var(--muted);font-size:10px}
+.row .hr{font-family:var(--pixel);color:var(--orange-d);font-size:10px;min-width:60px;text-align:right}
+
+.total{position:fixed;bottom:120px;left:34px;z-index:5;background:#fff;border:3px solid var(--ink);box-shadow:4px 4px 0 var(--ink);padding:12px 18px;font-weight:900;font-size:14px}
+.total b{font-family:var(--pixel);color:var(--orange-d);font-size:20px;margin:0 4px}
+
+.footer{position:fixed;bottom:0;left:0;right:0;z-index:5;background:var(--ink);color:#fff;display:flex;justify-content:space-between;align-items:center;padding:11px 34px}
+.footer .l{font-family:var(--pixel);font-size:14px;letter-spacing:2px}
+.footer .l b{color:var(--orange)}
+.footer .r{font-family:var(--pixel);font-size:11px;color:#C9BE9E;letter-spacing:1px}
+
+.scan{position:fixed;bottom:120px;right:34px;z-index:5;background:#fff;border:3px solid var(--ink);box-shadow:4px 4px 0 var(--ink);padding:12px;display:flex;gap:12px;align-items:center}
+.scan #survey-qr{width:78px;height:78px}
+.scan #survey-qr img,.scan #survey-qr canvas{width:100%!important;height:100%!important;display:block}
+.scan .st{font-weight:900;font-size:13px;line-height:1.4;max-width:110px}
+.scan .st b{color:var(--orange-d)}
+
+.demo{position:fixed;bottom:62px;left:34px;z-index:6;display:flex;gap:6px;opacity:.4}
+.demo:hover{opacity:1}
+.demo button{font-family:var(--kr);font-weight:900;font-size:11px;border:2px solid var(--ink);background:var(--orange);color:var(--ink);padding:6px 10px;box-shadow:2px 2px 0 var(--ink);cursor:pointer}
+.demo button:active{transform:translate(2px,2px);box-shadow:1px 1px 0 var(--ink)}
+.demo button.alt{background:#fff}
+
+.flyin{position:fixed;top:52%;left:50%;transform:translate(-50%,-50%) scale(.7);z-index:20;text-align:center;opacity:0;pointer-events:none;transition:opacity .35s,transform .45s}
+.flyin.show{opacity:1;transform:translate(-50%,-50%) scale(1)}
+.flyin .card{background:#fff;border:4px solid var(--ink);box-shadow:8px 8px 0 var(--ink);padding:22px 34px}
+.flyin .em{font-size:70px;line-height:1}
+.flyin .big{font-size:40px;font-weight:900;margin-top:6px}
+.flyin .lm{font-size:18px;color:var(--orange-d);font-weight:900;margin-top:2px}
+.flyin .jt{font-family:var(--pixel);font-size:12px;color:var(--muted);margin-top:10px}
+</style>
+</head>
+<body>
+<div id="app"></div>
+
+<div class="mast">
+  <div class="sub">당신의 몸은 지금 어느 도시에 있나요?
+    <span class="en">WHERE IS YOUR BODY CLOCK?</span>
+  </div>
+</div>
+
+<div class="board panel">
+  <div class="bar">🥇 오늘의 시차왕</div>
+  <div class="body">
+    <div class="king">
+      <div class="medal">🥇</div>
+      <div class="kt">
+        <div class="kc" id="k-city">—</div>
+        <div class="kh" id="k-hr">-- : --</div>
+        <div class="kn" id="k-name"></div>
+      </div>
+
+    </div>
+    <div class="list" id="list"></div>
+  </div>
+</div>
+
+<div class="total">지금까지 <b id="total">0</b>명 도착</div>
+
+<div class="scan">
+  <div id="survey-qr"></div>
+  <div class="st">QR 찍고<br><b>내 시차</b> 확인하기</div>
+</div>
+
+<div class="demo" id="demo-controls" style="display:none">
+  <button onclick="randomEntry()">＋ 테스트 핀</button>
+  <button class="alt" onclick="resetBoard()">↺ 리셋</button>
+</div>
+
+<div class="footer">
+  <div class="l">당신의 <b>생체시계</b>는 몇 시?</div>
+  <div class="r">@CIRKADIANOFFICIAL</div>
+</div>
+
+<div class="flyin" id="flyin">
+  <div class="card">
+    <div class="em" id="fly-em"></div>
+    <div class="big" id="fly-city"></div>
+    <div class="lm" id="fly-lm"></div>
+    <div class="jt" id="fly-jt"></div>
+  </div>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<script>
+/* ===== Supabase (실시간 랭킹 수신) =====
+   cirkadian_jetlag_test.html 과 동일한 URL/anon key를 넣으세요. */
+const SUPABASE_URL='https://kbfvjlhpnjqhlofvwvab.supabase.co';
+const SUPABASE_ANON_KEY='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImtiZnZqbGhwbmpxaGxvZnZ3dmFiIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODQ2MjU5OTUsImV4cCI6MjEwMDIwMTk5NX0.-1Zb0ekBO5A0f-Mznv9XMa6pdLhaPTWHztmorfD06JA';
+// 방문자가 QR로 스캔해 들어갈 설문 페이지의 공개 URL (배포 후 채우기)
+const SURVEY_URL='https://YOUR-DEPLOYED-DOMAIN/cirkadian_jetlag_test.html';
+let supa=null;
+try{
+  if(window.supabase && !SUPABASE_URL.includes('YOUR-PROJECT')){
+    supa=window.supabase.createClient(SUPABASE_URL,SUPABASE_ANON_KEY);
+  }
+}catch(_){}
+try{new QRCode(document.getElementById('survey-qr'),{text:SURVEY_URL,width:78,height:78,colorDark:'#17130D',colorLight:'#fff',correctLevel:QRCode.CorrectLevel.M});}catch(_){}
+
+/* ===== 도시 매핑 (A안: 서울→서쪽) ===== */
+const CITIES=[
+  {key:'SEL',city:'서울',lm:'남산서울타워',emoji:'🇰🇷',icon:'🗼',lat:37.55,lon:126.99,max:0.4,quip:'생체시계 시차 0. 이 구역의 갓생러'},
+  {key:'PEK',city:'베이징',lm:'자금성',emoji:'🇨🇳',icon:'🏯',lat:39.92,lon:116.40,max:0.9,quip:'살짝 어긋난 시계. 주말에 늦잠 좀 잤죠?'},
+  {key:'BKK',city:'방콕',lm:'왓 아룬',emoji:'🇹🇭',icon:'🛕',lat:13.74,lon:100.49,max:1.5,quip:'몸은 이미 동남아 휴양 모드'},
+  {key:'DEL',city:'델리',lm:'타지마할',emoji:'🇮🇳',icon:'🕌',lat:28.61,lon:77.20,max:2.1,quip:'몸의 절반은 인도 어딘가를 여행 중'},
+  {key:'DXB',city:'두바이',lm:'부르즈 할리파',emoji:'🇦🇪',icon:'🏙️',lat:25.20,lon:55.27,max:2.75,quip:'몸만 중동에 두고 오셨네요'},
+  {key:'NBO',city:'나이로비',lm:'마사이마라',emoji:'🇰🇪',icon:'🦁',lat:-1.29,lon:36.82,max:3.25,quip:'몸은 이미 아프리카 사파리 중'},
+  {key:'MOW',city:'모스크바',lm:'크렘린',emoji:'🇷🇺',icon:'🏰',lat:55.75,lon:37.62,max:3.75,quip:'매주 시베리아 횡단 중. 몸이 고생이 많아요'},
+  {key:'ROM',city:'로마',lm:'콜로세움',emoji:'🇮🇹',icon:'🏛️',lat:41.90,lon:12.50,max:4.75,quip:'생체시계는 이미 로마에서 휴가 중'},
+  {key:'LON',city:'런던',lm:'런던 아이',emoji:'🇬🇧',icon:'🎡',lat:51.50,lon:-0.12,max:6.5,quip:'생체시계가 유럽으로 이민 갔습니다'},
+  {key:'NYC',city:'뉴욕',lm:'자유의 여신상',emoji:'🇺🇸',icon:'🗽',lat:40.69,lon:-74.04,max:8.5,quip:'낮과 밤이 뒤집힘. 지구 반대편 라이프'},
+  {key:'SFO',city:'샌프란시스코',lm:'골든게이트 브리지',emoji:'🇺🇸',icon:'🌉',lat:37.77,lon:-122.42,max:99,quip:'시계가 태평양을 건넜어요. 역대급 시차'},
+];
+function cityFor(h){for(const c of CITIES){if(h<=c.max)return c;}return CITIES[CITIES.length-1];}
+function fmtH(h){const m=Math.round(h*60);const H=Math.floor(m/60),M=m%60;return H>0?`${H}시간 ${M}분`:`${M}분`;}
+
+/* ===== 대륙 러프 폴리곤 ([lon,lat]) ===== */
+const LAND=[
+ [[-168,65],[-155,71],[-130,70],[-100,72],[-82,73],[-64,60],[-56,52],[-52,47],[-66,44],[-70,42],[-75,35],[-81,25],[-90,19],[-97,16],[-105,20],[-114,28],[-124,40],[-130,48],[-140,59],[-160,60],[-168,65]],
+ [[-45,60],[-30,68],[-18,72],[-20,82],[-40,83],[-56,78],[-52,68],[-46,62],[-45,60]],
+ [[-80,9],[-60,11],[-52,5],[-48,-2],[-35,-6],[-38,-14],[-48,-25],[-58,-35],[-66,-45],[-74,-52],[-71,-40],[-70,-25],[-76,-12],[-81,-3],[-80,9]],
+ [[-17,15],[-8,28],[0,36],[11,37],[23,33],[33,31],[43,12],[51,11],[45,2],[40,-4],[40,-16],[33,-27],[20,-35],[15,-30],[12,-16],[9,-2],[3,4],[-8,7],[-17,15]],
+ [[-10,44],[-9,36],[0,38],[10,38],[19,40],[28,41],[30,45],[40,48],[38,55],[30,60],[24,66],[15,63],[8,58],[-2,52],[-8,50],[-10,44]],
+ [[30,60],[38,55],[40,48],[45,42],[48,40],[56,27],[60,25],[68,24],[75,8],[80,8],[88,22],[93,22],[98,10],[106,10],[110,18],[118,22],[122,30],[128,42],[135,50],[142,54],[160,62],[178,68],[160,73],[120,76],[90,78],[60,70],[45,68],[36,66],[30,60]],
+ [[95,6],[105,1],[118,5],[128,6],[140,-3],[132,-8],[120,-9],[108,-7],[100,2],[95,6]],
+ [[113,-22],[122,-18],[130,-11],[142,-11],[146,-18],[153,-27],[150,-38],[140,-38],[129,-32],[115,-35],[113,-22]],
+ [[166,-46],[172,-41],[178,-38],[174,-34],[168,-44],[166,-46]],
+ [[129,31],[135,34],[141,37],[146,44],[141,42],[133,34],[129,31]],
+ [[125,34],[126,38],[128,41],[130,42],[130,38],[129,35],[127,34],[125,34]],
+ [[68,8],[77,8],[80,13],[88,22],[92,22],[80,30],[74,32],[70,24],[68,8]],
+ [[7,44],[12,46],[15,42],[18,40],[16,38],[13,42],[8,44],[7,44]],
+ [[35,12],[43,12],[56,25],[52,29],[42,29],[36,20],[35,12]],
+ [[-25,-58],[-55,-63],[-100,-72],[-150,-75],[-180,-78],[180,-78],[100,-66],[40,-68],[-20,-70],[-25,-58]]
+];
+function isLand(lon,lat){
+  for(const poly of LAND){
+    let inside=false;
+    for(let i=0,j=poly.length-1;i<poly.length;j=i++){
+      const xi=poly[i][0],yi=poly[i][1],xj=poly[j][0],yj=poly[j][1];
+      if(((yi>lat)!==(yj>lat)) && (lon < (xj-xi)*(lat-yi)/(yj-yi)+xi)) inside=!inside;
+    }
+    if(inside) return true;
+  }
+  return false;
+}
+
+/* ===== equirect 캔버스: 대륙 면 + 히트맵 ===== */
+const TW=1024,TH=512;
+let baseCanvas,heatCanvas,globeTex;
+function lonlatToXY(lon,lat){return [ (lon+180)/360*TW, (90-lat)/180*TH ];}
+function buildGlobeTexture(){
+  // 바다 배경
+  baseCanvas=document.createElement('canvas');baseCanvas.width=TW;baseCanvas.height=TH;
+  const b=baseCanvas.getContext('2d');
+  b.fillStyle='#FBEAC6';b.fillRect(0,0,TW,TH);
+  // 위경선(아주 옅게)
+  b.strokeStyle='rgba(217,112,10,0.10)';b.lineWidth=1;
+  for(let lon=-180;lon<=180;lon+=30){const [x]=lonlatToXY(lon,0);b.beginPath();b.moveTo(x,0);b.lineTo(x,TH);b.stroke();}
+  for(let lat=-60;lat<=60;lat+=30){const [,y]=lonlatToXY(0,lat);b.beginPath();b.moveTo(0,y);b.lineTo(TW,y);b.stroke();}
+  // (대륙은 점으로 그림 — 여기선 바다 배경만)
+  // 히트맵 레이어(투명 시작)
+  heatCanvas=document.createElement('canvas');heatCanvas.width=TW;heatCanvas.height=TH;
+  globeTex=new THREE.CanvasTexture(composited());
+  globeTex.needsUpdate=true;
+}
+function composited(){
+  const c=document.createElement('canvas');c.width=TW;c.height=TH;const x=c.getContext('2d');
+  x.drawImage(baseCanvas,0,0);x.drawImage(heatCanvas,0,0);
+  return c;
+}
+function stampHeat(lon,lat){
+  const h=heatCanvas.getContext('2d');
+  const [cx,cy]=lonlatToXY(lon,lat);
+  const rad=44;
+  const g=h.createRadialGradient(cx,cy,0,cx,cy,rad);
+  g.addColorStop(0,'rgba(226,75,60,0.42)');   // 코랄/레드 번짐
+  g.addColorStop(0.5,'rgba(226,75,60,0.16)');
+  g.addColorStop(1,'rgba(226,75,60,0)');
+  h.globalCompositeOperation='source-over';
+  h.fillStyle=g;h.beginPath();h.arc(cx,cy,rad,0,7);h.fill();
+  // 코어 점
+  h.fillStyle='rgba(200,40,30,0.55)';h.beginPath();h.arc(cx,cy,5,0,7);h.fill();
+  refreshTex();
+}
+let _rt=null;
+function refreshTex(){ if(_rt)return; _rt=requestAnimationFrame(()=>{ globeTex.image=composited(); globeTex.needsUpdate=true; _rt=null; }); }
+
+/* ===== three.js ===== */
+const R=100;let scene,camera,renderer,globe,pinLayer;
+const app=document.getElementById('app');
+function ll2v(lat,lon,r){const phi=(90-lat)*Math.PI/180,theta=(lon+180)*Math.PI/180;
+  return new THREE.Vector3(-r*Math.sin(phi)*Math.cos(theta),r*Math.cos(phi),r*Math.sin(phi)*Math.sin(theta));}
+
+function emojiSprite(ch,px,scale){
+  const c=document.createElement('canvas');c.width=c.height=160;const x=c.getContext('2d');
+  x.textAlign='center';x.textBaseline='middle';x.font=px+'px sans-serif';x.fillText(ch,80,88);
+  const m=new THREE.SpriteMaterial({map:new THREE.CanvasTexture(c),transparent:true,depthTest:true});
+  const s=new THREE.Sprite(m);s.scale.set(scale,scale,1);return s;
+}
+function labelCanvas(city,rank){
+  const medal=rank===1?'🥇':rank===2?'🥈':rank===3?'🥉':'';
+  const c=document.createElement('canvas');c.width=420;c.height=110;const x=c.getContext('2d');
+  x.fillStyle='#17130D';x.fillRect(6,6,408,98);
+  x.fillStyle='#FFF3D6';x.fillRect(12,12,396,86);
+  x.font='900 46px "Noto Sans KR",sans-serif';x.textAlign='center';x.textBaseline='middle';
+  const txt=(medal?medal+' ':'')+city;
+  x.fillStyle='#17130D';x.fillText(txt,210,58);
+  return new THREE.CanvasTexture(c);
+}
+function labelSprite(city){
+  const m=new THREE.SpriteMaterial({map:labelCanvas(city,0),transparent:true,depthTest:true});
+  const s=new THREE.Sprite(m);s.scale.set(39,10.2,1);return s;
+}
+
+function init(){
+  scene=new THREE.Scene();
+  camera=new THREE.PerspectiveCamera(38,innerWidth/innerHeight,1,3000);
+  camera.position.set(0,10,300);camera.lookAt(0,-30,0);
+  renderer=new THREE.WebGLRenderer({antialias:true,alpha:true});
+  renderer.setPixelRatio(Math.min(devicePixelRatio,2));renderer.setSize(innerWidth,innerHeight);
+  app.appendChild(renderer.domElement);
+
+  globe=new THREE.Group();scene.add(globe);globe.rotation.z=0.26;globe.position.y=-82;
+
+  // 크림 코어 (뒷면 점 가림)
+  globe.add(new THREE.Mesh(new THREE.SphereGeometry(R*0.98,48,48),
+    new THREE.MeshBasicMaterial({color:0xF7E4B8})));
+  // 림/그림자
+  globe.add(new THREE.Mesh(new THREE.SphereGeometry(R*1.02,48,48),
+    new THREE.MeshBasicMaterial({color:0xD9700A,transparent:true,opacity:0.10,side:THREE.BackSide})));
+
+  // 바다/히트맵용 텍스처 구체 (대륙은 아래 점으로)
+  buildGlobeTexture();
+  globe.add(new THREE.Mesh(new THREE.SphereGeometry(R*0.998,64,64),
+    new THREE.MeshBasicMaterial({map:globeTex})));
+
+  // 대륙 픽셀 점 (육지=진한 오렌지)
+  const cLand=new THREE.Color(0xC4661A);
+  const landPts=[],landCols=[];
+  for(let lat=-84;lat<=84;lat+=2.2){for(let lon=-180;lon<180;lon+=2.2){
+    if(isLand(lon,lat)){const v=ll2v(lat,lon,R);landPts.push(v.x,v.y,v.z);landCols.push(cLand.r,cLand.g,cLand.b);}
+  }}
+  const gLand=new THREE.BufferGeometry();
+  gLand.setAttribute('position',new THREE.Float32BufferAttribute(landPts,3));
+  gLand.setAttribute('color',new THREE.Float32BufferAttribute(landCols,3));
+  globe.add(new THREE.Points(gLand,new THREE.PointsMaterial({size:2.9,vertexColors:true,sizeAttenuation:true})));
+
+  pinLayer=new THREE.Group();globe.add(pinLayer);
+
+  addEventListener('resize',()=>{camera.aspect=innerWidth/innerHeight;camera.updateProjectionMatrix();renderer.setSize(innerWidth,innerHeight);});
+  animate();
+}
+
+const pinsByKey={};
+function updateRanks(){
+  const arr=Object.values(pinsByKey).sort((a,b)=>b.count-a.count);
+  arr.forEach((p,i)=>{
+    const sc=20+Math.min(p.count,22)*1.9; p.ico.scale.set(sc,sc,1);
+    const rank=i<3?i+1:0;
+    if(p._rank!==rank){ p._rank=rank; p.lab.material.map=labelCanvas(p.city,rank); p.lab.material.needsUpdate=true; }
+  });
+}
+
+function addPin(c){
+  let p=pinsByKey[c.key];
+  if(!p){
+    const grp=new THREE.Group();
+    const base=ll2v(c.lat,c.lon,R),dir=base.clone().normalize();
+    // 검은 기둥
+    const top=dir.clone().multiplyScalar(R+9);
+    grp.add(new THREE.Line(new THREE.BufferGeometry().setFromPoints([base,top]),
+      new THREE.LineBasicMaterial({color:0x17130D})));
+    // 랜드마크 이모지
+    const ico=emojiSprite(c.icon,120,26);ico.position.copy(dir.clone().multiplyScalar(R+16));grp.add(ico);
+    // 도시 라벨
+    const lab=labelSprite(c.city);lab.position.copy(dir.clone().multiplyScalar(R+25));grp.add(lab);
+    pinLayer.add(grp);
+    p=pinsByKey[c.key]={grp,ico,lab,city:c.city,base:R+16,dir,count:0,born:performance.now()};
+  }
+  p.count++;p.born=performance.now();
+  stampHeat(c.lon,c.lat);
+}
+
+/* ===== 보드/데이터 ===== */
+let entries=[],total=0;
+function addEntry(name,hours){
+  const c=cityFor(hours);addPin(c);entries.push({name,hours,c});total++;
+  updateRanks();showFly(c,hours);spinTo(c);renderBoard();
+}
+function renderBoard(){
+  document.getElementById('total').textContent=total;
+  let king=null;for(const e of entries){if(!king||e.hours>king.hours)king=e;}
+  if(king){
+    document.getElementById('k-city').textContent=king.c.emoji+' '+king.c.city;
+    document.getElementById('k-hr').textContent=fmtH(king.hours);
+    document.getElementById('k-name').textContent=king.name?king.name+'님 · '+king.c.lm:king.c.lm;
+  }
+  const agg={};for(const e of entries){const k=e.c.key;if(!agg[k])agg[k]={c:e.c,n:0,max:0};agg[k].n++;agg[k].max=Math.max(agg[k].max,e.hours);}
+  const rows=Object.values(agg).sort((a,b)=>b.max-a.max).slice(0,7);
+  document.getElementById('list').innerHTML=rows.map(r=>
+    `<div class="row"><span class="em">${r.c.icon}</span><span class="city">${r.c.city}</span><span class="cnt">${r.n}명</span><span class="hr">${fmtH(r.max)}</span></div>`).join('');
+}
+function showFly(c,hours){
+  document.getElementById('fly-em').textContent=c.icon;
+  document.getElementById('fly-city').textContent=c.emoji+' '+c.city;
+  document.getElementById('fly-lm').textContent=c.lm;
+  document.getElementById('fly-jt').textContent='사회적 시차 '+fmtH(hours)+' · '+c.quip;
+  const f=document.getElementById('flyin');f.classList.add('show');
+  clearTimeout(showFly._t);showFly._t=setTimeout(()=>f.classList.remove('show'),2600);
+}
+
+let targetY=null;
+function spinTo(c){const theta=(c.lon+180)*Math.PI/180;targetY=-theta+Math.PI/2;}
+function animate(){
+  requestAnimationFrame(animate);
+  if(targetY!==null){let d=targetY-globe.rotation.y;d=Math.atan2(Math.sin(d),Math.cos(d));globe.rotation.y+=d*0.06;if(Math.abs(d)<0.01)targetY=null;}
+  else globe.rotation.y+=0.0015;
+  const t=performance.now();
+  for(const k in pinsByKey){const p=pinsByKey[k];const r=p.base+Math.sin(t/500+p.dir.x)*1.5;p.ico.position.copy(p.dir.clone().multiplyScalar(r));}
+  renderer.render(scene,camera);
+}
+
+/* ===== 데모 ===== */
+const NAMES=['민준','서연','도윤','하은','시우','지아','예준','수아','태인','희엽','승주','다연'];
+function randomEntry(){const h=Math.max(0.25,Math.round(Math.random()*Math.random()*9*4)/4);addEntry(NAMES[Math.floor(Math.random()*NAMES.length)],h);}
+function resetBoard(){entries=[];total=0;for(const k in pinsByKey){pinLayer.remove(pinsByKey[k].grp);delete pinsByKey[k];}if(heatCanvas){heatCanvas.getContext('2d').clearRect(0,0,TW,TH);refreshTex();}renderBoard();}
+window.addEntry=addEntry;
+// 같은 브라우저(키오스크)에서 테스트 패드로 보낸 결과도 반영
+try{const bc=new BroadcastChannel('cirkadian');bc.onmessage=(e)=>{if(e.data&&typeof e.data.hours==='number')addEntry('',e.data.hours);};}catch(_){}
+
+/* ===== Supabase 실시간 랭킹 ===== */
+async function loadInitialBoard(){
+  if(!supa)return;
+  const since=new Date(Date.now()-1000*60*60*12).toISOString(); // 최근 12시간
+  const {data,error}=await supa.from('board_events').select('city_key,social_jetlag_min,created_at').gte('created_at',since).order('created_at',{ascending:true}).limit(500);
+  if(error){console.warn('board load failed',error);return;}
+  for(const row of data){
+    const c=CITIES.find(x=>x.key===row.city_key);if(!c)continue;
+    addPin(c);entries.push({name:'',hours:row.social_jetlag_min/60,c});total++;
+  }
+  updateRanks();renderBoard();
+}
+function subscribeBoard(){
+  if(!supa)return;
+  supa.channel('board_events_live')
+    .on('postgres_changes',{event:'INSERT',schema:'public',table:'board_events'},(payload)=>{
+      const row=payload.new;const c=CITIES.find(x=>x.key===row.city_key);if(!c)return;
+      addEntry('',row.social_jetlag_min/60);
+    })
+    .subscribe();
+}
+
+const DEMO=new URLSearchParams(location.search).has('demo');
+init();renderBoard();
+if(supa){ loadInitialBoard(); subscribeBoard(); }
+if(DEMO){
+  document.getElementById('demo-controls').style.display='flex';
+  setTimeout(()=>{[3.1,1.2,6.4,2.0,0.4,4.2].forEach((h,i)=>setTimeout(()=>addEntry(NAMES[i],h),i*750));},500);
+  setInterval(()=>{if(document.visibilityState==='visible')randomEntry();},9000);
+}
+</script>
+</body>
+</html>
