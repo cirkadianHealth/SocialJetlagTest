@@ -159,6 +159,7 @@ svg.radar{width:100%;height:auto;display:block}
 
     <div class="panel">
       <p style="font-size:11.5px;color:var(--muted);line-height:1.5;margin-bottom:2px">응답은 이름·연락처 없이 완전 익명으로 저장되며, 수면 연구 목적으로만 사용돼요.</p>
+      <div class="namerow"><input type="text" id="name" placeholder="닉네임(배너 표시용)" maxlength="8"></div>
       <button class="btn" style="margin-top:16px" onclick="run()">내 리포트 보기 ✈️</button>
     </div>
   </div>
@@ -398,8 +399,9 @@ function run(){
   fillStoryCard(c,jet);
 
   // 부스 모니터(같은 브라우저로 테스트할 때만 동작) + Supabase 익명 저장
-  try{new BroadcastChannel('cirkadian').postMessage({hours:jet});}catch(_){}
-  submitAnon({wb,ww,eb,ew,wdDur,weDur,avg,wdMid,jet,chrono,score,cityKey:c.key});
+  const nickname=(document.getElementById('name').value||'').trim().slice(0,8);
+  try{new BroadcastChannel('cirkadian').postMessage({hours:jet,name:nickname});}catch(_){}
+  submitAnon({wb,ww,eb,ew,wdDur,weDur,avg,wdMid,jet,chrono,score,cityKey:c.key,nickname});
 }
 function v(id){return document.getElementById(id).dataset.value;}
 
@@ -440,7 +442,7 @@ async function submitAnon(d){
       q_phone:idx('phone'), q_caffeine:idx('caff'), q_sleepy:idx('sleepy'),
       city_key:d.cityKey
     });
-    await supa.from('board_events').insert({submission_id:submissionId, city_key:d.cityKey, social_jetlag_min:Math.round(d.jet*60)});
+    await supa.from('board_events').insert({submission_id:submissionId, city_key:d.cityKey, social_jetlag_min:Math.round(d.jet*60), nickname:d.nickname||null});
   }catch(e){console.warn('anon submit failed',e);}
 }
 

@@ -35,6 +35,7 @@ create table if not exists research_responses (
 
 alter table research_responses enable row level security;
 
+drop policy if exists "anon can insert research responses" on research_responses;
 create policy "anon can insert research responses"
   on research_responses for insert
   to anon
@@ -56,11 +57,13 @@ create table if not exists board_events (
 
 alter table board_events enable row level security;
 
+drop policy if exists "anon can insert board events" on board_events;
 create policy "anon can insert board events"
   on board_events for insert
   to anon
   with check (true);
 
+drop policy if exists "anyone can read board events" on board_events;
 create policy "anyone can read board events"
   on board_events for select
   to anon
@@ -101,3 +104,8 @@ create policy "anon can delete board events"
   on board_events for delete
   to anon
   using (true);
+
+-- 5) Optional nickname for the monitor's TOP 3 podium display only.
+--    Stored in board_events (already public/display data), never in
+--    research_responses, so the research dataset stays fully anonymous.
+alter table board_events add column if not exists nickname text;

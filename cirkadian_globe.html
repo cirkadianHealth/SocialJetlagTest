@@ -39,6 +39,20 @@ canvas{display:block}
 .row .cnt{font-family:var(--pixel);color:var(--muted);font-size:10px}
 .row .hr{font-family:var(--pixel);color:var(--orange-d);font-size:10px;min-width:60px;text-align:right}
 
+.podium{position:fixed;top:150px;left:34px;width:300px;z-index:5}
+.podium .body{padding:14px;display:flex;flex-direction:column;gap:10px}
+.prow{display:flex;align-items:center;gap:12px;background:var(--pale);border:3px solid var(--ink);padding:10px 12px;box-shadow:3px 3px 0 var(--ink)}
+.prow .medal{font-size:28px;line-height:1;flex-shrink:0}
+.prow .pinfo{flex:1;min-width:0}
+.prow .pname{font-weight:900;font-size:15px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.prow .pcity{font-size:12px;color:var(--muted);font-weight:700;margin-top:2px}
+.prow .phr{font-family:var(--pixel);font-size:12px;color:var(--orange-d);margin-top:5px}
+.prow.p1{background:var(--orange);padding:18px 16px;box-shadow:5px 5px 0 var(--ink)}
+.prow.p1 .medal{font-size:50px}
+.prow.p1 .pname{font-size:22px}
+.prow.p1 .pcity{font-size:14px;color:var(--ink)}
+.prow.p1 .phr{font-size:17px;margin-top:7px}
+
 .total{position:fixed;bottom:120px;left:34px;z-index:5;background:#fff;border:3px solid var(--ink);box-shadow:4px 4px 0 var(--ink);padding:12px 18px;font-weight:900;font-size:14px}
 .total b{font-family:var(--pixel);color:var(--orange-d);font-size:20px;margin:0 4px}
 
@@ -68,6 +82,15 @@ canvas{display:block}
 <div class="mast">
   <div class="sub">당신의 몸은 지금 어느 도시에 있나요?
     <span class="en">WHERE IS YOUR BODY CLOCK?</span>
+  </div>
+</div>
+
+<div class="podium panel">
+  <div class="bar">🏆 TOP 3</div>
+  <div class="body">
+    <div class="prow p1"><div class="medal">🥇</div><div class="pinfo"><div class="pname" id="p1-name">–</div><div class="pcity" id="p1-city">–</div><div class="phr" id="p1-hr">--</div></div></div>
+    <div class="prow p2"><div class="medal">🥈</div><div class="pinfo"><div class="pname" id="p2-name">–</div><div class="pcity" id="p2-city">–</div><div class="phr" id="p2-hr">--</div></div></div>
+    <div class="prow p3"><div class="medal">🥉</div><div class="pinfo"><div class="pname" id="p3-name">–</div><div class="pcity" id="p3-city">–</div><div class="phr" id="p3-hr">--</div></div></div>
   </div>
 </div>
 
@@ -327,6 +350,18 @@ function renderBoard(){
   const rows=Object.values(agg).sort((a,b)=>b.max-a.max).slice(0,7);
   document.getElementById('list').innerHTML=rows.map(r=>
     `<div class="row"><span class="em">${r.c.icon}</span><span class="city">${r.c.city}</span><span class="cnt">${r.n}명</span><span class="hr">${fmtH(r.max)}</span></div>`).join('');
+  renderPodium();
+}
+function renderPodium(){
+  const top3=[...entries].sort((a,b)=>b.hours-a.hours).slice(0,3);
+  for(let i=0;i<3;i++){
+    const rank=i+1,e=top3[i];
+    const nameEl=document.getElementById('p'+rank+'-name'),cityEl=document.getElementById('p'+rank+'-city'),hrEl=document.getElementById('p'+rank+'-hr');
+    if(!e){nameEl.textContent='–';cityEl.textContent='–';hrEl.textContent='--';continue;}
+    nameEl.textContent=e.name?e.name:'익명';
+    cityEl.textContent=e.c.emoji+' '+e.c.city;
+    hrEl.textContent=fmtH(e.hours);
+  }
 }
 function showFly(c,hours){
   document.getElementById('fly-em').textContent=c.icon;
@@ -350,17 +385,17 @@ function animate(){
 
 window.addEntry=addEntry;
 // 같은 브라우저(키오스크)에서 테스트 패드로 보낸 결과도 반영
-try{const bc=new BroadcastChannel('cirkadian');bc.onmessage=(e)=>{if(e.data&&typeof e.data.hours==='number')addEntry('',e.data.hours);};}catch(_){}
+try{const bc=new BroadcastChannel('cirkadian');bc.onmessage=(e)=>{if(e.data&&typeof e.data.hours==='number')addEntry(e.data.name||'',e.data.hours);};}catch(_){}
 
 /* ===== Supabase 실시간 랭킹 ===== */
 async function loadInitialBoard(){
   if(!supa)return;
   const since=new Date(Date.now()-1000*60*60*12).toISOString(); // 최근 12시간
-  const {data,error}=await supa.from('board_events').select('city_key,social_jetlag_min,created_at').gte('created_at',since).order('created_at',{ascending:true}).limit(500);
+  const {data,error}=await supa.from('board_events').select('city_key,social_jetlag_min,nickname,created_at').gte('created_at',since).order('created_at',{ascending:true}).limit(500);
   if(error){console.warn('board load failed',error);return;}
   for(const row of data){
     const c=CITIES.find(x=>x.key===row.city_key);if(!c)continue;
-    addPin(c);entries.push({name:'',hours:row.social_jetlag_min/60,c});total++;
+    addPin(c);entries.push({name:row.nickname||'',hours:row.social_jetlag_min/60,c});total++;
   }
   updateRanks();renderBoard();
 }
@@ -369,7 +404,7 @@ function subscribeBoard(){
   supa.channel('board_events_live')
     .on('postgres_changes',{event:'INSERT',schema:'public',table:'board_events'},(payload)=>{
       const row=payload.new;const c=CITIES.find(x=>x.key===row.city_key);if(!c)return;
-      addEntry('',row.social_jetlag_min/60);
+      addEntry(row.nickname||'',row.social_jetlag_min/60);
     })
     .subscribe();
 }
