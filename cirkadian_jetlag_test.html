@@ -471,7 +471,7 @@ renderSurvey();
 
 // 시각 선택 팝업 — 시/분 목록이 한 화면에 같이 뜨고, 분은 10분 단위로만 선택 가능
 const TIME_DEFAULTS={'wd-bed':'00:30','wd-wake':'07:00','we-bed':'01:30','we-wake':'10:00'};
-const HOURS=[...Array(24).keys()].map(h=>String(h).padStart(2,'0'));
+const HOURS=[...Array(24).keys()].map(h=>String((h+19)%24).padStart(2,'0'));
 const MINS=['00','10','20','30','40','50'];
 const tpopH=document.getElementById('tpop-h'), tpopM=document.getElementById('tpop-m'), tpopBg=document.getElementById('tpop-bg');
 tpopH.innerHTML=HOURS.map(h=>`<div class="tpop-item" data-v="${h}">${h}</div>`).join('');
