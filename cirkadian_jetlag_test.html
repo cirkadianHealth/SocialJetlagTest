@@ -14,8 +14,7 @@
 body{background:radial-gradient(1000px 700px at 50% 24%,#FFF8E6,#FFF0CE 60%,#FCE6B0);font-family:var(--kr);color:var(--ink);display:flex;justify-content:center;padding:24px 16px 48px}
 .wrap{width:100%;max-width:600px}
 .mast{text-align:center;margin-bottom:20px}
-.mast .word{font-family:var(--pixel);font-size:20px;letter-spacing:4px}
-.mast .word .k{color:var(--orange-d)}
+.mast .word-logo{width:150px;height:auto}
 .mast .t{font-size:25px;font-weight:900;margin-top:12px;line-height:1.25}
 .mast .s{font-size:13px;color:var(--muted);font-weight:700;margin-top:8px;line-height:1.5}
 
@@ -61,7 +60,7 @@ button.tsel.active{background:var(--pale2)}
 #result{display:none}
 .sheet{background:#fff;border:4px solid var(--ink);box-shadow:8px 8px 0 var(--ink);padding:20px 18px}
 .rmast{text-align:center;border-bottom:3px solid var(--ink);padding-bottom:10px;margin-bottom:14px}
-.rmast .w{font-family:var(--pixel);font-size:22px;letter-spacing:3px}.rmast .w .k{color:var(--orange-d)}
+.rmast .w-logo{width:150px;height:auto}
 .rmast .sub{font-size:11px;font-weight:700;color:var(--muted);margin-top:6px}
 .hero{display:grid;grid-template-columns:1fr 1fr;gap:12px;align-items:center}
 .hero .you{font-size:13px;font-weight:700;color:var(--muted)}
@@ -109,8 +108,7 @@ svg.radar{width:100%;height:auto;display:block}
 
 /* ===== 인스타 스토리용 카드 (9:16, 화면 밖에서 렌더링 후 캡처) ===== */
 #storyCard{position:fixed;left:-4000px;top:0;width:540px;height:960px;box-sizing:border-box;background:linear-gradient(180deg,#FFF8E6,#FCE6B0);color:var(--ink);font-family:var(--kr);display:flex;flex-direction:column;align-items:center;padding:56px 40px;text-align:center}
-#storyCard .sw{font-family:var(--pixel);font-size:26px;letter-spacing:4px}
-#storyCard .sw .k{color:var(--orange-d)}
+#storyCard .sw-logo{width:220px;height:auto}
 #storyCard .ssub{font-size:14px;font-weight:700;color:var(--muted);margin-top:6px;letter-spacing:1px}
 #storyCard .scard{margin-top:54px;background:#fff;border:5px solid var(--ink);box-shadow:10px 10px 0 var(--ink);width:100%;padding:34px 26px;box-sizing:border-box}
 #storyCard .syou{font-size:15px;font-weight:700;color:var(--muted)}
@@ -131,7 +129,7 @@ svg.radar{width:100%;height:auto;display:block}
 <body>
 <div class="wrap">
   <div class="mast">
-    <div class="word">CIR<span class="k">K</span>ADIAN</div>
+    <img class="word-logo" src="logo.png" alt="CIRKADIAN">
     <div class="t">당신의 몸은 지금 어느 도시에 있나요? ✈️</div>
   </div>
 
@@ -167,7 +165,7 @@ svg.radar{width:100%;height:auto;display:block}
 
   <div id="result">
     <div class="sheet" id="sheet">
-      <div class="rmast"><div class="w">CIR<span class="k">K</span>ADIAN</div><div class="sub">생체시계 시차 리포트 · SOCIAL JETLAG REPORT</div></div>
+      <div class="rmast"><img class="w-logo" src="logo.png" alt="CIRKADIAN"><div class="sub">생체시계 시차 리포트 · SOCIAL JETLAG REPORT</div></div>
       <div class="hero">
         <div>
           <div class="you">당신의 몸은 지금…</div>
@@ -198,7 +196,7 @@ svg.radar{width:100%;height:auto;display:block}
 </div>
 
 <div id="storyCard">
-  <div class="sw">CIR<span class="k">K</span>ADIAN</div>
+  <img class="sw-logo" src="logo.png" alt="CIRKADIAN">
   <div class="ssub">SOCIAL JETLAG REPORT</div>
   <div class="scard">
     <div class="syou">당신의 몸은 지금…</div>
