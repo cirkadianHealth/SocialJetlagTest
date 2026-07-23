@@ -71,7 +71,15 @@ create policy "anyone can read board events"
 
 -- Enable realtime (Database > Replication in the dashboard must also have
 -- this table toggled on for the "supabase_realtime" publication).
-alter publication supabase_realtime add table board_events;
+do $$
+begin
+  if not exists (
+    select 1 from pg_publication_tables
+    where pubname = 'supabase_realtime' and schemaname = 'public' and tablename = 'board_events'
+  ) then
+    alter publication supabase_realtime add table board_events;
+  end if;
+end $$;
 
 -- 3) Migration: submission_id links a research_responses row to its
 --    matching board_events row (same submission), so the admin page can
