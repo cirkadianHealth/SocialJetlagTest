@@ -240,29 +240,33 @@ try{
 
 const CITIES=[
   {key:'SEL',city:'서울',lm:'남산서울타워',flag:'🇰🇷',icon:'🗼',max:0.4,quip:'생체시계 시차 0. 이 구역의 갓생러',
-    explain:'이번 주는 어디로도 안 떠나고 그대로 <b>서울</b>에 머물러 있어요. 리듬이 안 흔들려서 몸이 편안한 거예요.'},
+    travel:null},
   {key:'PEK',city:'베이징',lm:'자금성',flag:'🇨🇳',icon:'🏯',max:0.9,quip:'살짝 어긋난 시계. 주말에 늦잠 좀 잤죠?',
-    explain:'당신은 주말마다 옆나라 <b>중국 베이징</b>으로 살짝 마실 다녀오는 셈이에요. 그 정도로 살짝 피곤한 거예요.'},
+    travel:'중국 베이징'},
   {key:'BKK',city:'방콕',lm:'왓 아룬',flag:'🇹🇭',icon:'🛕',max:1.5,quip:'몸은 이미 동남아 휴양 모드',
-    explain:'당신은 주말마다 <b>동남아 방콕</b>으로 여행을 다녀오는 셈이에요. 그래서 피곤한 거예요.'},
+    travel:'동남아 방콕'},
   {key:'DEL',city:'델리',lm:'타지마할',flag:'🇮🇳',icon:'🕌',max:2.1,quip:'몸의 절반은 인도 어딘가를 여행 중',
-    explain:'당신은 주말마다 <b>인도 델리</b>로 여행을 다녀오는 셈이에요. 그래서 몸이 무거운 거예요.'},
+    travel:'인도 델리'},
   {key:'DXB',city:'두바이',lm:'부르즈 할리파',flag:'🇦🇪',icon:'🏙️',max:2.75,quip:'몸만 중동에 두고 오셨네요',
-    explain:'당신은 주말마다 <b>중동 두바이</b>로 출장을 다녀오는 셈이에요. 그래서 피곤한 거예요.'},
+    travel:'중동 두바이'},
   {key:'NBO',city:'나이로비',lm:'마사이마라',flag:'🇰🇪',icon:'🦁',max:3.25,quip:'몸은 이미 아프리카 사파리 중',
-    explain:'당신은 주말마다 <b>아프리카 나이로비</b>로 여행을 다녀오는 셈이에요. 그래서 피곤한 거예요.'},
+    travel:'아프리카 나이로비'},
   {key:'MOW',city:'모스크바',lm:'크렘린',flag:'🇷🇺',icon:'🏰',max:3.75,quip:'매주 시베리아 횡단 중. 몸이 고생이 많아요',
-    explain:'당신은 주말마다 시베리아를 건너 <b>러시아 모스크바</b>까지 다녀오는 셈이에요. 몸이 남아나질 않죠.'},
+    travel:'러시아 모스크바'},
   {key:'ROM',city:'로마',lm:'콜로세움',flag:'🇮🇹',icon:'🏛️',max:4.75,quip:'생체시계는 이미 로마에서 휴가 중',
-    explain:'당신은 주말마다 <b>유럽 로마</b>로 여행을 다녀오는 셈이에요. 시차 적응할 틈이 없는 거예요.'},
+    travel:'유럽 로마'},
   {key:'LON',city:'런던',lm:'런던 아이',flag:'🇬🇧',icon:'🎡',max:6.5,quip:'생체시계가 유럽으로 이민 갔습니다',
-    explain:'당신은 주말마다 <b>영국 런던</b>으로 출장을 다녀오는 셈이에요. 생체시계가 아예 다른 대륙에 사는 거예요.'},
+    travel:'영국 런던'},
   {key:'NYC',city:'뉴욕',lm:'자유의 여신상',flag:'🇺🇸',icon:'🗽',max:8.5,quip:'낮과 밤이 뒤집힘. 지구 반대편 라이프',
-    explain:'당신은 주말마다 <b>미국 뉴욕</b>으로 여행을 다녀오는 셈이에요. 낮과 밤이 통째로 뒤바뀐 삶을 살고 있는 거예요.'},
+    travel:'미국 뉴욕'},
   {key:'SFO',city:'샌프란시스코',lm:'골든게이트 브리지',flag:'🇺🇸',icon:'🌉',max:99,quip:'시계가 태평양을 건넜어요. 역대급 시차',
-    explain:'당신은 주말마다 태평양을 건너 <b>미국 서부</b>까지 다녀오는 셈이에요. 매주 시차 적응 중인 몸인 거죠.'},
+    travel:'미국 서부'},
 ];
 function cityFor(h){for(const c of CITIES)if(h<=c.max)return c;return CITIES[CITIES.length-1];}
+function cityExplain(c,jet){
+  if(!c.travel) return '이번 주는 어디로도 안 떠나고 그대로 <b>서울</b>에 머물러 있어요. 리듬이 안 흔들려서 몸이 편안한 거예요.';
+  return `당신은 주말마다 <b>${c.travel}</b>까지 날아갔다 오는 셈이에요. 비행기도 안 탔는데 시차 적응만 매주 반복하니, 월요일이 버거운 게 당연해요. 매주 <b>${fmtH(jet)}</b>씩 몸속 시계를 옮겼다 되돌리는 중이거든요.`;
+}
 const clamp=(v,a,b)=>Math.max(a,Math.min(b,v));
 function dec(s){const[h,m]=s.split(':').map(Number);return h+m/60;}
 function dur(bed,wake){let d=(wake-bed+24)%24;if(d===0)d=8;return d;}
@@ -331,7 +335,7 @@ function run(){
   if(sc('night')>=100&&sc('lat')>=100)tags.push('#꿀잠');
   if(tags.length===0)tags.push('#균형리듬');
 
-  document.getElementById('r-explain').innerHTML=c.explain;
+  document.getElementById('r-explain').innerHTML=cityExplain(c,jet);
 
   // ── 교차 분석용 원자재 계산 ──
   function clk(h){h=((h%24)+24)%24;const m=Math.round(h*60);let H=Math.floor(m/60),M=m%60;const p=H<12?'오전':'오후';let h12=H%12;if(h12===0)h12=12;return `${p} ${h12}시`+(M?` ${M}분`:'');}
@@ -450,7 +454,7 @@ function fillStoryCard(c,jet){
   document.getElementById('story-city').textContent=c.city;
   document.getElementById('story-flag').textContent=c.flag;
   document.getElementById('story-jet').textContent=fmtH(jet);
-  document.getElementById('story-explain').innerHTML=c.explain;
+  document.getElementById('story-explain').innerHTML=cityExplain(c,jet);
   const qrBox=document.getElementById('story-qr');
   qrBox.innerHTML='';
   try{new QRCode(qrBox,{text:location.href.split('?')[0],width:82,height:82,colorDark:'#17130D',colorLight:'#fff',correctLevel:QRCode.CorrectLevel.M});}catch(_){}
