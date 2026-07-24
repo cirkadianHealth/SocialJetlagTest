@@ -306,12 +306,12 @@ function addPin(c){
     const top=dir.clone().multiplyScalar(R+9);
     grp.add(new THREE.Line(new THREE.BufferGeometry().setFromPoints([base,top]),
       new THREE.LineBasicMaterial({color:0x17130D})));
-    // 랜드마크 이모지
-    const ico=emojiSprite(c.icon,120,26);ico.position.copy(dir.clone().multiplyScalar(R+16));grp.add(ico);
-    // 도시 라벨
-    const lab=labelSprite(c.city);lab.position.copy(dir.clone().multiplyScalar(R+25));grp.add(lab);
+    // 도시 라벨 (랜드마크보다 안쪽에 둬서 이모지에 가려지지 않게)
+    const lab=labelSprite(c.city);lab.position.copy(dir.clone().multiplyScalar(R+16));grp.add(lab);
+    // 랜드마크 이모지 (라벨보다 바깥쪽 = 화면에서 라벨 위로 보임)
+    const ico=emojiSprite(c.icon,120,26);ico.position.copy(dir.clone().multiplyScalar(R+25));grp.add(ico);
     pinLayer.add(grp);
-    p=pinsByKey[c.key]={grp,ico,lab,city:c.city,base:R+16,dir,count:0,born:performance.now()};
+    p=pinsByKey[c.key]={grp,ico,lab,city:c.city,base:R+25,dir,count:0,born:performance.now()};
   }
   p.count++;p.born=performance.now();
   stampHeat(c.lon,c.lat);
