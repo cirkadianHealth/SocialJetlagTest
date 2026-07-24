@@ -617,6 +617,16 @@ function fitText(x,text,maxW,startPx,weight){
   while(x.measureText(text).width>maxW && px>26);
   return px+3;
 }
+let _logoImg;
+function loadLogoImg(){
+  if(_logoImg) return Promise.resolve(_logoImg);
+  return new Promise(resolve=>{
+    const img=new Image();
+    img.onload=()=>{_logoImg=img;resolve(img);};
+    img.onerror=()=>resolve(null);
+    img.src='logo.png';
+  });
+}
 async function makeStory(){
   const cv=document.getElementById('storyCanvas'),x=cv.getContext('2d');
   const W=1080,H=1920;
@@ -636,8 +646,14 @@ async function makeStory(){
   x.textAlign='center'; x.textBaseline='alphabetic';
 
   // 헤더
-  x.fillStyle='#17130D'; x.font='40px "Press Start 2P", monospace';
-  x.fillText('CIRKADIAN',W/2,168);
+  const logo=await loadLogoImg();
+  if(logo){
+    const logoW=520, logoH=logoW*(logo.naturalHeight/logo.naturalWidth);
+    x.drawImage(logo,(W-logoW)/2,100,logoW,logoH);
+  }else{
+    x.fillStyle='#17130D'; x.font='40px "Press Start 2P", monospace';
+    x.fillText('CIRKADIAN',W/2,168);
+  }
   x.fillStyle='#8A7B5E'; x.font='700 26px "Noto Sans KR", sans-serif';
   x.fillText('생체시계 시차 리포트',W/2,214);
   x.strokeStyle='#17130D'; x.lineWidth=5;
@@ -652,7 +668,15 @@ async function makeStory(){
   x.fillStyle='#17130D'; x.font=`900 ${tPx}px "Noto Sans KR", sans-serif`;
   x.fillText(STORY.title||'',W/2,620);
   x.fillStyle='#D9700A'; x.font='700 28px "Noto Sans KR", sans-serif';
-  x.fillText((STORY.flag||'')+' '+(STORY.lm||''),W/2,668);
+  {
+    const flagTxt=STORY.flag||'', lmTxt=STORY.lm||'', gapPx=14;
+    const flagW=x.measureText(flagTxt).width, lmW=x.measureText(lmTxt).width;
+    let sx=W/2-(flagW+gapPx+lmW)/2;
+    x.textAlign='left';
+    x.fillText(flagTxt,sx,668); sx+=flagW+gapPx;
+    x.fillText(lmTxt,sx,668);
+    x.textAlign='center';
+  }
 
   // 시차 박스
   const jy=710;
@@ -690,7 +714,7 @@ async function makeStory(){
   x.fillText('한 주 동안 벌어지는 일',W/2,wy);
   const DAYS=['월','화','수','목','금','토','일'];
   const COL={miss:'#D6462F',warm:'#F2A63B',ok:'#FFF3D6',off:'#EDE4CE'};
-  const cellW=112, gap=12, totalW=cellW*7+gap*6, sx=(W-totalW)/2, by=wy+34, bh=104;
+  const cellW=112, gap=12, totalW=cellW*7+gap*6, sx=(W-totalW)/2, by=wy+58, bh=104;
   (STORY.week||[]).forEach((w,i)=>{
     const bx=sx+i*(cellW+gap);
     x.fillStyle='#8A7B5E'; x.font='700 24px "Noto Sans KR", sans-serif';
