@@ -55,7 +55,7 @@ canvas{display:block}
 .footer .l b{color:var(--orange)}
 .footer .r{font-family:var(--pixel);font-size:11px;color:#C9BE9E;letter-spacing:1px}
 
-.scan{position:fixed;bottom:66px;right:34px;z-index:5;background:#fff;border:3px solid var(--ink);box-shadow:4px 4px 0 var(--ink);padding:12px;display:flex;gap:12px;align-items:center}
+.scan{position:fixed;bottom:66px;right:34px;z-index:5;display:flex;gap:12px;align-items:center}
 .scan #survey-qr{width:78px;height:78px}
 .scan #survey-qr img,.scan #survey-qr canvas{width:100%!important;height:100%!important;display:block}
 .scan .st{font-weight:900;font-size:13px;line-height:1.4;max-width:110px}
@@ -135,17 +135,17 @@ try{new QRCode(document.getElementById('survey-qr'),{text:SURVEY_URL,width:78,he
 
 /* ===== 도시 매핑 (A안: 서울→서쪽) ===== */
 const CITIES=[
-  {key:'SEL',city:'서울',lm:'남산서울타워',emoji:'🇰🇷',icon:'🗼',lat:37.55,lon:126.99,max:0.4,quip:'생체시계 시차 0. 이 구역의 갓생러'},
-  {key:'PEK',city:'베이징',lm:'자금성',emoji:'🇨🇳',icon:'🏯',lat:39.92,lon:116.40,max:0.9,quip:'살짝 어긋난 시계. 주말에 늦잠 좀 잤죠?'},
-  {key:'BKK',city:'방콕',lm:'왓 아룬',emoji:'🇹🇭',icon:'🛕',lat:13.74,lon:100.49,max:1.5,quip:'몸은 이미 동남아 휴양 모드'},
-  {key:'DEL',city:'델리',lm:'타지마할',emoji:'🇮🇳',icon:'🕌',lat:28.61,lon:77.20,max:2.1,quip:'몸의 절반은 인도 어딘가를 여행 중'},
-  {key:'DXB',city:'두바이',lm:'부르즈 할리파',emoji:'🇦🇪',icon:'🏙️',lat:25.20,lon:55.27,max:2.75,quip:'몸만 중동에 두고 오셨네요'},
-  {key:'NBO',city:'나이로비',lm:'마사이마라',emoji:'🇰🇪',icon:'🦁',lat:-1.29,lon:36.82,max:3.25,quip:'몸은 이미 아프리카 사파리 중'},
-  {key:'MOW',city:'모스크바',lm:'크렘린',emoji:'🇷🇺',icon:'🏰',lat:55.75,lon:37.62,max:3.75,quip:'매주 시베리아 횡단 중. 몸이 고생이 많아요'},
-  {key:'ROM',city:'로마',lm:'콜로세움',emoji:'🇮🇹',icon:'🏛️',lat:41.90,lon:12.50,max:4.75,quip:'생체시계는 이미 로마에서 휴가 중'},
-  {key:'LON',city:'런던',lm:'런던 아이',emoji:'🇬🇧',icon:'🎡',lat:51.50,lon:-0.12,max:6.5,quip:'생체시계가 유럽으로 이민 갔습니다'},
-  {key:'NYC',city:'뉴욕',lm:'자유의 여신상',emoji:'🇺🇸',icon:'🗽',lat:40.69,lon:-74.04,max:8.5,quip:'낮과 밤이 뒤집힘. 지구 반대편 라이프'},
-  {key:'SFO',city:'샌프란시스코',lm:'골든게이트 브리지',emoji:'🇺🇸',icon:'🌉',lat:37.77,lon:-122.42,max:99,quip:'시계가 태평양을 건넜어요. 역대급 시차'},
+  {key:'SEL',city:'서울',lm:'남산서울타워',emoji:'🇰🇷',lat:37.55,lon:126.99,max:0.4,quip:'생체시계 시차 0. 이 구역의 갓생러'},
+  {key:'PEK',city:'베이징',lm:'자금성',emoji:'🇨🇳',lat:39.92,lon:116.40,max:0.9,quip:'살짝 어긋난 시계. 주말에 늦잠 좀 잤죠?'},
+  {key:'BKK',city:'방콕',lm:'왓 아룬',emoji:'🇹🇭',lat:13.74,lon:100.49,max:1.5,quip:'몸은 이미 동남아 휴양 모드'},
+  {key:'DEL',city:'델리',lm:'타지마할',emoji:'🇮🇳',lat:28.61,lon:77.20,max:2.1,quip:'몸의 절반은 인도 어딘가를 여행 중'},
+  {key:'DXB',city:'두바이',lm:'부르즈 할리파',emoji:'🇦🇪',lat:25.20,lon:55.27,max:2.75,quip:'몸만 중동에 두고 오셨네요'},
+  {key:'NBO',city:'나이로비',lm:'마사이마라',emoji:'🇰🇪',lat:-1.29,lon:36.82,max:3.25,quip:'몸은 이미 아프리카 사파리 중'},
+  {key:'MOW',city:'모스크바',lm:'크렘린',emoji:'🇷🇺',lat:55.75,lon:37.62,max:3.75,quip:'매주 시베리아 횡단 중. 몸이 고생이 많아요'},
+  {key:'ROM',city:'로마',lm:'콜로세움',emoji:'🇮🇹',lat:41.90,lon:12.50,max:4.75,quip:'생체시계는 이미 로마에서 휴가 중'},
+  {key:'LON',city:'런던',lm:'런던 아이',emoji:'🇬🇧',lat:51.50,lon:-0.12,max:6.5,quip:'생체시계가 유럽으로 이민 갔습니다'},
+  {key:'NYC',city:'뉴욕',lm:'자유의 여신상',emoji:'🇺🇸',lat:40.69,lon:-74.04,max:8.5,quip:'낮과 밤이 뒤집힘. 지구 반대편 라이프'},
+  {key:'SFO',city:'샌프란시스코',lm:'골든게이트 브리지',emoji:'🇺🇸',lat:37.77,lon:-122.42,max:99,quip:'시계가 태평양을 건넜어요. 역대급 시차'},
 ];
 function cityFor(h){for(const c of CITIES){if(h<=c.max)return c;}return CITIES[CITIES.length-1];}
 function fmtH(h){const m=Math.round(h*60);const H=Math.floor(m/60),M=m%60;return H>0?`${H}시간 ${M}분`:`${M}분`;}
@@ -307,7 +307,7 @@ function addPin(c){
     grp.add(new THREE.Line(new THREE.BufferGeometry().setFromPoints([base,top]),
       new THREE.LineBasicMaterial({color:0x17130D})));
     // 랜드마크 이모지
-    const ico=emojiSprite(c.icon,120,26);ico.position.copy(dir.clone().multiplyScalar(R+16));grp.add(ico);
+    const ico=emojiSprite(c.emoji,120,26);ico.position.copy(dir.clone().multiplyScalar(R+16));grp.add(ico);
     // 도시 라벨
     const lab=labelSprite(c.city);lab.position.copy(dir.clone().multiplyScalar(R+25));grp.add(lab);
     pinLayer.add(grp);
@@ -329,7 +329,7 @@ function renderBoard(){
   const rows=Object.values(agg).sort((a,b)=>b.n-a.n);
   document.getElementById('list').innerHTML=rows.map(r=>{
     const pct=total>0?Math.round(r.n/total*100):0;
-    return `<div class="row"><span class="em">${r.c.icon}</span><span class="city">${r.c.city}</span><span class="cnt">${r.n}명</span><span class="pct">${pct}%</span></div>`;
+    return `<div class="row"><span class="em">${r.c.emoji}</span><span class="city">${r.c.city}</span><span class="cnt">${r.n}명</span><span class="pct">${pct}%</span></div>`;
   }).join('');
   renderPodium();
 }
@@ -345,8 +345,8 @@ function renderPodium(){
   }
 }
 function showFly(c,hours){
-  document.getElementById('fly-em').textContent=c.icon;
-  document.getElementById('fly-city').textContent=c.emoji+' '+c.city;
+  document.getElementById('fly-em').textContent=c.emoji;
+  document.getElementById('fly-city').textContent=c.city;
   document.getElementById('fly-lm').textContent=c.lm;
   document.getElementById('fly-jt').textContent='사회적 시차 '+fmtH(hours)+' · '+c.quip;
   const f=document.getElementById('flyin');f.classList.add('show');
