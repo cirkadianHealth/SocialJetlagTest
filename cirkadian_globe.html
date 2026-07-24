@@ -8,7 +8,7 @@
 <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <style>
-:root{--ink:#17130D;--orange:#F2A63B;--orange-d:#D9700A;--gold:#E8863B;--pale:#FFF3D6;--pale2:#FFE6B3;--muted:#8A7B5E;--pixel:'Press Start 2P',monospace;--kr:'Noto Sans KR',sans-serif}
+:root{--ink:#17130D;--orange:#FFA54B;--orange-d:#FE933F;--gold:#FFAB2A;--pale:#FFF3D6;--pale2:#FFBC69;--muted:#8A7B5E;--pixel:'Press Start 2P',monospace;--kr:'Noto Sans KR',sans-serif}
 *{margin:0;box-sizing:border-box}
 html,body{height:100%;overflow:hidden;font-family:var(--kr);color:var(--ink)}
 body{background:radial-gradient(1400px 900px at 50% 40%,#FFF8E6 0%,#FFF0CE 55%,#FCE6B0 100%)}
@@ -263,7 +263,7 @@ function init(){
     new THREE.MeshBasicMaterial({color:0xF7E4B8})));
   // 림/그림자
   globe.add(new THREE.Mesh(new THREE.SphereGeometry(R*1.02,48,48),
-    new THREE.MeshBasicMaterial({color:0xD9700A,transparent:true,opacity:0.10,side:THREE.BackSide})));
+    new THREE.MeshBasicMaterial({color:0xFE933F,transparent:true,opacity:0.10,side:THREE.BackSide})));
 
   // 바다/히트맵용 텍스처 구체 (대륙은 아래 점으로)
   buildGlobeTexture();

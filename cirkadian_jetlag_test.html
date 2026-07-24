@@ -7,7 +7,7 @@
 <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&family=Noto+Sans+KR:wght@400;500;700;900&display=swap" rel="stylesheet">
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <style>
-:root{--ink:#17130D;--orange:#F2A63B;--orange-d:#D9700A;--pale:#FFF3D6;--pale2:#FFE6B3;--muted:#8A7B5E;--red:#D6462F;--pixel:'Press Start 2P',monospace;--kr:'Noto Sans KR',sans-serif}
+:root{--ink:#17130D;--orange:#FFA54B;--orange-d:#FE933F;--pale:#FFF3D6;--pale2:#FFBC69;--muted:#8A7B5E;--red:#D6462F;--pixel:'Press Start 2P',monospace;--kr:'Noto Sans KR',sans-serif}
 *{margin:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent}
 body{background:radial-gradient(1000px 700px at 50% 24%,#FFF8E6,#FFF0CE 60%,#FCE6B0);font-family:var(--kr);color:var(--ink);display:flex;justify-content:center;padding:24px 16px 48px}
 .wrap{width:100%;max-width:600px}
@@ -241,7 +241,7 @@ svg.day{width:100%;height:auto;display:block}
         <div class="week" id="w-week"></div>
         <div class="wlegend">
           <span><i style="background:#D6462F"></i>어긋남</span>
-          <span><i style="background:#F2A63B"></i>적응 중</span>
+          <span><i style="background:#FFA54B"></i>적응 중</span>
           <span><i style="background:#FFF3D6"></i>맞음</span>
           <span><i style="background:#EDE4CE"></i>다시 밀림</span>
         </div>
@@ -667,7 +667,7 @@ async function makeStory(){
   const tPx=fitText(x,STORY.title||'',W-180,74,'900');
   x.fillStyle='#17130D'; x.font=`900 ${tPx}px "Noto Sans KR", sans-serif`;
   x.fillText(STORY.title||'',W/2,620);
-  x.fillStyle='#D9700A'; x.font='700 28px "Noto Sans KR", sans-serif';
+  x.fillStyle='#FE933F'; x.font='700 28px "Noto Sans KR", sans-serif';
   {
     const flagTxt=STORY.flag||'', lmTxt=STORY.lm||'', gapPx=14;
     const flagW=x.measureText(flagTxt).width, lmW=x.measureText(lmTxt).width;
@@ -683,7 +683,7 @@ async function makeStory(){
   x.fillStyle='#17130D'; x.fillRect(110,jy,W-220,190);
   x.fillStyle='#FFE6B3'; x.font='700 28px "Noto Sans KR", sans-serif';
   x.fillText('나의 사회적 시차',W/2,jy+62);
-  x.fillStyle='#F2A63B'; x.font='58px "Press Start 2P", monospace';
+  x.fillStyle='#FFA54B'; x.font='58px "Press Start 2P", monospace';
   x.fillText(STORY.jet||'0시간',W/2,jy+142);
 
   // 두 개의 시계
@@ -702,7 +702,7 @@ async function makeStory(){
   x.fillText(STORY.world||'--:--',lx,cy+188);
   x.fillStyle='#D6462F';
   x.fillText(STORY.body||'--:--',rx,cy+188);
-  x.fillStyle='#D9700A'; x.font='34px "Press Start 2P", monospace';
+  x.fillStyle='#FE933F'; x.font='34px "Press Start 2P", monospace';
   x.fillText('>',W/2,cy+178);
   x.fillStyle='#8A7B5E'; x.font='700 24px "Noto Sans KR", sans-serif';
   x.fillText('알람이 울리는 시각',lx,cy+232);
@@ -713,7 +713,7 @@ async function makeStory(){
   x.fillStyle='#17130D'; x.font='900 30px "Noto Sans KR", sans-serif';
   x.fillText('한 주 동안 벌어지는 일',W/2,wy);
   const DAYS=['월','화','수','목','금','토','일'];
-  const COL={miss:'#D6462F',warm:'#F2A63B',ok:'#FFF3D6',off:'#EDE4CE'};
+  const COL={miss:'#D6462F',warm:'#FFA54B',ok:'#FFF3D6',off:'#EDE4CE'};
   const cellW=112, gap=12, totalW=cellW*7+gap*6, sx=(W-totalW)/2, by=wy+58, bh=104;
   (STORY.week||[]).forEach((w,i)=>{
     const bx=sx+i*(cellW+gap);
@@ -742,7 +742,7 @@ async function makeStory(){
   x.beginPath(); x.moveTo(150,1706); x.lineTo(W-150,1706); x.stroke();
   x.fillStyle='#17130D'; x.font='900 36px "Noto Sans KR", sans-serif';
   x.fillText('내 몸은 지금 어느 도시에 있을까?',W/2,1772);
-  x.fillStyle='#D9700A'; x.font='26px "Press Start 2P", monospace';
+  x.fillStyle='#FE933F'; x.font='26px "Press Start 2P", monospace';
   x.fillText('@CIRKADIANOFFICIAL',W/2,1832);
 
   cv.toBlob(b=>{
@@ -807,7 +807,7 @@ function drawDay(ww,wb){
   }
 
   const marks=[
-    {h:3,      e:'🔺',n:'집중 골든타임', c:'#D9700A'},
+    {h:3,      e:'🔺',n:'집중 골든타임', c:'#FE933F'},
     {h:7.5,    e:'🔻',n:'나른해지는 시간대', c:'#A8894F'},
     {h:melC,   e:'🕯️',n:'멜라토닌 켜짐', c:'#C4661A'},
     {h:hBed,   e:'🛏️',n:'잠드는 시각',   c:'#5A3D00'},
@@ -823,12 +823,12 @@ function drawDay(ww,wb){
 
   svg.innerHTML=`
     <defs><linearGradient id="dg" x1="0" y1="0" x2="0" y2="1">
-      <stop offset="0" stop-color="#F2A63B" stop-opacity=".55"/>
-      <stop offset="1" stop-color="#F2A63B" stop-opacity=".04"/>
+      <stop offset="0" stop-color="#FFA54B" stop-opacity=".55"/>
+      <stop offset="1" stop-color="#FFA54B" stop-opacity=".04"/>
     </linearGradient></defs>
     <line x1="${PADX}" y1="${BOT}" x2="${W-PADX}" y2="${BOT}" stroke="#17130D" stroke-width="2.5"/>
     <path d="${f}" fill="url(#dg)"/>
-    <path d="${d}" fill="none" stroke="#D9700A" stroke-width="3" stroke-linejoin="round"/>
+    <path d="${d}" fill="none" stroke="#FE933F" stroke-width="3" stroke-linejoin="round"/>
     ${ticks}${mk}
     <text x="${PADX}" y="${TOP-10}" font-size="10.5" font-weight="700" font-family="Noto Sans KR" fill="#8A7B5E">각성도</text>`;
 
