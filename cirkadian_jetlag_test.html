@@ -7,7 +7,7 @@
 <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&family=Noto+Sans+KR:wght@400;500;700;900&display=swap" rel="stylesheet">
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <style>
-:root{--ink:#17130D;--orange:#FFA54B;--orange-d:#FE933F;--pale:#FFF3D6;--pale2:#FFBC69;--muted:#8A7B5E;--red:#D6462F;--pixel:'Press Start 2P',monospace;--kr:'Noto Sans KR',sans-serif}
+:root{--ink:#17130D;--orange:#FFA54B;--orange-d:#B85C0E;--pale:#FFF3D6;--pale2:#FFBC69;--muted:#8A7B5E;--red:#D6462F;--pixel:'Press Start 2P',monospace;--kr:'Noto Sans KR',sans-serif}
 *{margin:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent}
 body{background:radial-gradient(1000px 700px at 50% 24%,#FFF8E6,#FFF0CE 60%,#FCE6B0);font-family:var(--kr);color:var(--ink);display:flex;justify-content:center;padding:24px 16px 48px}
 .wrap{width:100%;max-width:600px}
@@ -667,7 +667,7 @@ async function makeStory(){
   const tPx=fitText(x,STORY.title||'',W-180,74,'900');
   x.fillStyle='#17130D'; x.font=`900 ${tPx}px "Noto Sans KR", sans-serif`;
   x.fillText(STORY.title||'',W/2,620);
-  x.fillStyle='#FE933F'; x.font='700 28px "Noto Sans KR", sans-serif';
+  x.fillStyle='#B85C0E'; x.font='700 28px "Noto Sans KR", sans-serif';
   {
     const flagTxt=STORY.flag||'', lmTxt=STORY.lm||'', gapPx=14;
     const flagW=x.measureText(flagTxt).width, lmW=x.measureText(lmTxt).width;
@@ -702,7 +702,7 @@ async function makeStory(){
   x.fillText(STORY.world||'--:--',lx,cy+188);
   x.fillStyle='#D6462F';
   x.fillText(STORY.body||'--:--',rx,cy+188);
-  x.fillStyle='#FE933F'; x.font='34px "Press Start 2P", monospace';
+  x.fillStyle='#B85C0E'; x.font='34px "Press Start 2P", monospace';
   x.fillText('>',W/2,cy+178);
   x.fillStyle='#8A7B5E'; x.font='700 24px "Noto Sans KR", sans-serif';
   x.fillText('알람이 울리는 시각',lx,cy+232);
@@ -742,7 +742,7 @@ async function makeStory(){
   x.beginPath(); x.moveTo(150,1706); x.lineTo(W-150,1706); x.stroke();
   x.fillStyle='#17130D'; x.font='900 36px "Noto Sans KR", sans-serif';
   x.fillText('내 몸은 지금 어느 도시에 있을까?',W/2,1772);
-  x.fillStyle='#FE933F'; x.font='26px "Press Start 2P", monospace';
+  x.fillStyle='#B85C0E'; x.font='26px "Press Start 2P", monospace';
   x.fillText('@CIRKADIANOFFICIAL',W/2,1832);
 
   cv.toBlob(b=>{
