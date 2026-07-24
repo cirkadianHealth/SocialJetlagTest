@@ -134,10 +134,10 @@ const supa=window.supabase.createClient(SUPABASE_URL,SUPABASE_ANON_KEY);
 
 const CITY_ORDER=['SEL','PEK','BKK','DEL','DXB','NBO','MOW','ROM','LON','NYC','SFO'];
 const CITY_INFO={
-  SEL:{city:'서울',flag:'🇰🇷'}, PEK:{city:'베이징',flag:'🇨🇳'}, BKK:{city:'방콕',flag:'🇹🇭'},
-  DEL:{city:'델리',flag:'🇮🇳'}, DXB:{city:'두바이',flag:'🇦🇪'}, NBO:{city:'나이로비',flag:'🇰🇪'},
-  MOW:{city:'모스크바',flag:'🇷🇺'}, ROM:{city:'로마',flag:'🇮🇹'}, LON:{city:'런던',flag:'🇬🇧'},
-  NYC:{city:'뉴욕',flag:'🇺🇸'}, SFO:{city:'샌프란시스코',flag:'🇺🇸'}
+  SEL:{city:'서울',icon:'🗼'}, PEK:{city:'베이징',icon:'🏯'}, BKK:{city:'방콕',icon:'🛕'},
+  DEL:{city:'델리',icon:'🕌'}, DXB:{city:'두바이',icon:'🏙️'}, NBO:{city:'나이로비',icon:'🦁'},
+  MOW:{city:'모스크바',icon:'🏰'}, ROM:{city:'로마',icon:'🏛️'}, LON:{city:'런던',icon:'🎡'},
+  NYC:{city:'뉴욕',icon:'🗽'}, SFO:{city:'샌프란시스코',icon:'🌉'}
 };
 function fmtH(min){min=Math.round(min);const H=Math.floor(min/60),M=min%60;return H>0?`${H}시간 ${M}분`:`${M}분`;}
 function isToday(iso){const d=new Date(iso),n=new Date();return d.getFullYear()===n.getFullYear()&&d.getMonth()===n.getMonth()&&d.getDate()===n.getDate();}
@@ -171,7 +171,7 @@ function renderCityChart(){
   if(rows.length===0){el.innerHTML='<div class="empty">아직 응답이 없어요.</div>';return;}
   el.innerHTML=CITY_ORDER.map(k=>{
     const info=CITY_INFO[k],n=counts[k],pct=Math.round(n/max*100);
-    return `<div class="hrow"><div class="lab">${info.flag} ${info.city}</div><div class="track"><div class="fill" style="width:${pct}%"></div></div><div class="cnt">${n}</div></div>`;
+    return `<div class="hrow"><div class="lab">${info.icon} ${info.city}</div><div class="track"><div class="fill" style="width:${pct}%"></div></div><div class="cnt">${n}</div></div>`;
   }).join('');
 }
 
@@ -207,10 +207,10 @@ function renderEntries(){
   const latest=rows.slice(0,100);
   if(latest.length===0){tbody.innerHTML='<tr><td colspan="4" class="empty">아직 응답이 없어요.</td></tr>';return;}
   tbody.innerHTML=latest.map(r=>{
-    const info=CITY_INFO[r.city_key]||{city:r.city_key,flag:'🌐'};
+    const info=CITY_INFO[r.city_key]||{city:r.city_key,icon:'🌐'};
     const t=new Date(r.created_at);
     const hhmm=String(t.getHours()).padStart(2,'0')+':'+String(t.getMinutes()).padStart(2,'0');
-    return `<tr><td>${hhmm}</td><td>${info.flag} ${info.city}</td><td>${fmtH(r.social_jetlag_min)}</td>
+    return `<tr><td>${hhmm}</td><td>${info.icon} ${info.city}</td><td>${fmtH(r.social_jetlag_min)}</td>
       <td><button onclick="requireAuth(()=>deleteEntry('${r.submission_id}'))">삭제</button></td></tr>`;
   }).join('');
 }
