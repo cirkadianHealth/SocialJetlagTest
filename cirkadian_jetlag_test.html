@@ -132,7 +132,7 @@ svg.day{width:100%;height:auto;display:block}
 .stat .sm{font-size:9.5px;color:var(--muted);font-weight:700;margin-top:4px}
 
 /* 체크리스트 */
-.todo{list-style:none}
+.todo{list-style:none;margin:0;padding:0}
 .todo li{display:flex;align-items:center;gap:11px;padding:13px 0;border-bottom:2px dashed #E0D2AE;cursor:pointer}
 .todo li:last-child{border-bottom:none}
 .todo .bxx{width:24px;height:24px;border:3px solid var(--ink);flex:none;display:flex;align-items:center;justify-content:center;font-size:15px;font-weight:900;background:#fff}
@@ -261,7 +261,7 @@ svg.day{width:100%;height:auto;display:block}
     <!-- 스탯 -->
     <div class="trio">
       <div class="stat"><div class="sl">🛌 평균 수면</div><div class="big px" id="r-avg">7:00</div><div class="sm">하루 평균</div></div>
-      <div class="stat"><div class="sl">🕐 크로노타입</div><div class="big" id="r-chrono">중간형</div><div class="sm" id="r-chrono2">평균 리듬</div></div>
+      <div class="stat"><div class="sl">🕐 시간대</div><div class="big" id="r-chrono">중간형</div><div class="sm" id="r-chrono2">평균 리듬</div></div>
       <div class="stat"><div class="sl">💯 수면 습관</div><div class="big" id="r-score">양호</div><div class="sm" id="r-score2">-- / 100</div></div>
     </div>
 
@@ -784,7 +784,7 @@ function drawDay(ww,wb){
 
   const marks=[
     {h:3,      e:'🔺',n:'집중 골든타임', c:'#D9700A'},
-    {h:7.5,    e:'🔻',n:'졸음 급락 구간', c:'#A8894F'},
+    {h:7.5,    e:'🔻',n:'나른해지는 시간대', c:'#A8894F'},
     {h:melC,   e:'🕯️',n:'멜라토닌 켜짐', c:'#C4661A'},
     {h:hBed,   e:'🛏️',n:'잠드는 시각',   c:'#5A3D00'},
   ].filter(m=>m.h>=0&&m.h<=hEnd);
