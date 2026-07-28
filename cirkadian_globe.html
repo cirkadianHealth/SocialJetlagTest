@@ -282,13 +282,13 @@ function ensureArc(c){
   const sel=CITIES.find(x=>x.key==='SEL');
   const pts=buildArc(sel,c);
   const geo=new THREE.BufferGeometry().setFromPoints(pts);
-  const mat=new THREE.LineDashedMaterial({color:0xF77F27,transparent:true,opacity:0.5,dashSize:2.4,gapSize:1.6});
+  const mat=new THREE.LineDashedMaterial({color:0x000000,transparent:true,opacity:0.5,dashSize:2.4,gapSize:1.6});
   const line=new THREE.Line(geo,mat);line.computeLineDistances();
   pinLayer.add(line);
   const label=arcLabelSprite(ARC_HOURS[c.key]||'');
   label.position.copy(pts[Math.round(pts.length*0.5)]);
   pinLayer.add(label);
-  arcs[c.key]={pts,planes:[]};
+  arcs[c.key]={pts,planes:[],line};
 }
 function updateArcPlanes(agg){
   for(const key in arcs){
@@ -363,11 +363,7 @@ function updateRanks(){
 function createPinVisual(c){
   const grp=new THREE.Group();
   const base=ll2v(c.lat,c.lon,R),dir=base.clone().normalize();
-  // 검은 기둥
-  const top=dir.clone().multiplyScalar(R+9);
-  grp.add(new THREE.Line(new THREE.BufferGeometry().setFromPoints([base,top]),
-    new THREE.LineBasicMaterial({color:0x17130D})));
-  // 랜드마크 이모지 — 기둥 위, 기준 높이
+  // 랜드마크 이모지 — 기준 높이
   const ico=emojiSprite(c.icon,120,26);ico.position.copy(dir.clone().multiplyScalar(R+16));grp.add(ico);
   // 도시 라벨 — 랜드마크와 같은 높이(반지름)에서, 화면상으로만 위로 살짝 띄워서 안 겹치게
   const lab=labelSprite(c.city);
@@ -424,19 +420,25 @@ function showFly(c,hours,name){
   document.getElementById('fly-lm').textContent=c.lm;
   document.getElementById('fly-jt').textContent='사회적 시차 '+fmtH(hours)+' · '+c.quip;
   const f=document.getElementById('flyin');f.classList.add('show');
-  clearTimeout(showFly._t);showFly._t=setTimeout(()=>f.classList.remove('show'),5000);
+  clearTimeout(showFly._t);showFly._t=setTimeout(()=>{f.classList.remove('show');startFlash(c);},5000);
 }
 
-let targetY=null;
+let targetY=null,flashKey=null,flashUntil=0,rotationLocked=false;
 function spinTo(c){const theta=(c.lon+180)*Math.PI/180;targetY=-theta+Math.PI/2;}
+function startFlash(c){
+  flashKey=c.key;flashUntil=performance.now()+4500;rotationLocked=true;
+  spinTo(c);
+}
 function animate(){
   requestAnimationFrame(animate);
-  if(targetY!==null){let d=targetY-globe.rotation.y;d=Math.atan2(Math.sin(d),Math.cos(d));globe.rotation.y+=d*0.06;if(Math.abs(d)<0.01)targetY=null;}
-  else globe.rotation.y+=0.0015;
   const t=performance.now();
+  if(flashKey&&t>flashUntil){flashKey=null;rotationLocked=false;}
+  if(targetY!==null){let d=targetY-globe.rotation.y;d=Math.atan2(Math.sin(d),Math.cos(d));globe.rotation.y+=d*0.06;if(Math.abs(d)<0.01)targetY=null;}
+  else if(!rotationLocked){globe.rotation.y+=0.0015;}
   for(const k in pinsByKey){const p=pinsByKey[k];const r=p.base+Math.sin(t/500+p.dir.x)*1.5;p.ico.position.copy(p.dir.clone().multiplyScalar(r));}
   for(const key in arcs){
     const arc=arcs[key];
+    if(arc.line)arc.line.material.opacity=(key===flashKey)?(0.3+0.55*(0.5+0.5*Math.sin(t/120))):0.5;
     arc.planes.forEach(pl=>{
       pl._t+=pl._speed;
       if(pl._t>1)pl._t-=1;
