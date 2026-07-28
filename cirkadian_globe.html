@@ -190,7 +190,7 @@ function buildGlobeTexture(){
   const b=baseCanvas.getContext('2d');
   b.fillStyle='#FBEAC6';b.fillRect(0,0,TW,TH);
   // 위경선(아주 옅게)
-  b.strokeStyle='rgba(184,92,14,0.10)';b.lineWidth=1;
+  b.strokeStyle='rgba(255,165,75,0.18)';b.lineWidth=1;
   for(let lon=-180;lon<=180;lon+=30){const [x]=lonlatToXY(lon,0);b.beginPath();b.moveTo(x,0);b.lineTo(x,TH);b.stroke();}
   for(let lat=-60;lat<=60;lat+=30){const [,y]=lonlatToXY(0,lat);b.beginPath();b.moveTo(0,y);b.lineTo(TW,y);b.stroke();}
   // (대륙은 점으로 그림 — 여기선 바다 배경만)
@@ -271,7 +271,7 @@ function init(){
     new THREE.MeshBasicMaterial({map:globeTex})));
 
   // 대륙 픽셀 점 (육지=진한 오렌지)
-  const cLand=new THREE.Color(0xB85C0E);
+  const cLand=new THREE.Color(0xFFA54B);
   const landPts=[],landCols=[];
   for(let lat=-84;lat<=84;lat+=2.2){for(let lon=-180;lon<180;lon+=2.2){
     if(isLand(lon,lat)){const v=ll2v(lat,lon,R);landPts.push(v.x,v.y,v.z);landCols.push(cLand.r,cLand.g,cLand.b);}
