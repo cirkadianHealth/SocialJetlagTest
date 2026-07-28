@@ -275,20 +275,19 @@ function arcLabelSprite(text){
   const m=new THREE.SpriteMaterial({map:new THREE.CanvasTexture(c),transparent:true,depthTest:true});
   const s=new THREE.Sprite(m);s.scale.set(17,5.7,1);return s;
 }
-function buildAllArcs(){
-  const sel=CITIES.find(c=>c.key==='SEL');
-  CITIES.forEach(c=>{
-    if(c.key==='SEL')return;
-    const pts=buildArc(sel,c);
-    const geo=new THREE.BufferGeometry().setFromPoints(pts);
-    const mat=new THREE.LineDashedMaterial({color:0xF77F27,transparent:true,opacity:0.5,dashSize:2.4,gapSize:1.6});
-    const line=new THREE.Line(geo,mat);line.computeLineDistances();
-    pinLayer.add(line);
-    const label=arcLabelSprite(ARC_HOURS[c.key]||'');
-    label.position.copy(pts[Math.round(pts.length*0.5)]);
-    pinLayer.add(label);
-    arcs[c.key]={pts,planes:[]};
-  });
+// 실제로 랜드마크 핀이 세워진 도시에 대해서만, 처음 그때 항로를 만듦
+function ensureArc(c){
+  if(c.key==='SEL'||arcs[c.key])return;
+  const sel=CITIES.find(x=>x.key==='SEL');
+  const pts=buildArc(sel,c);
+  const geo=new THREE.BufferGeometry().setFromPoints(pts);
+  const mat=new THREE.LineDashedMaterial({color:0xF77F27,transparent:true,opacity:0.5,dashSize:2.4,gapSize:1.6});
+  const line=new THREE.Line(geo,mat);line.computeLineDistances();
+  pinLayer.add(line);
+  const label=arcLabelSprite(ARC_HOURS[c.key]||'');
+  label.position.copy(pts[Math.round(pts.length*0.5)]);
+  pinLayer.add(label);
+  arcs[c.key]={pts,planes:[]};
 }
 function updateArcPlanes(agg){
   for(const key in arcs){
@@ -342,7 +341,6 @@ function init(){
   globe.add(new THREE.Points(gLand,new THREE.PointsMaterial({size:2.9,vertexColors:true,sizeAttenuation:true})));
 
   pinLayer=new THREE.Group();globe.add(pinLayer);
-  buildAllArcs();
 
   addEventListener('resize',()=>{camera.aspect=innerWidth/innerHeight;camera.updateProjectionMatrix();renderer.setSize(innerWidth,innerHeight);});
   animate();
@@ -376,6 +374,7 @@ function addPin(c){
     grp.add(lab);
     pinLayer.add(grp);
     p=pinsByKey[c.key]={grp,ico,lab,city:c.city,base:R+16,dir,count:0,born:performance.now()};
+    ensureArc(c);
   }
   p.count++;p.born=performance.now();
   stampHeat(c.lon,c.lat);
