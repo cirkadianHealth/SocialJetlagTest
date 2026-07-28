@@ -238,17 +238,17 @@ function emojiSprite(ch,px,scale){
 }
 function labelCanvas(city,rank){
   const medal=rank===1?'🥇':rank===2?'🥈':rank===3?'🥉':'';
-  const c=document.createElement('canvas');c.width=420;c.height=110;const x=c.getContext('2d');
-  x.fillStyle='#17130D';x.fillRect(6,6,408,98);
-  x.fillStyle='#FFF3D6';x.fillRect(12,12,396,86);
+  const c=document.createElement('canvas');c.width=300;c.height=110;const x=c.getContext('2d');
+  x.fillStyle='#17130D';x.fillRect(6,6,288,98);
+  x.fillStyle='#FFF3D6';x.fillRect(12,12,276,86);
   x.font='900 46px "Noto Sans KR",sans-serif';x.textAlign='center';x.textBaseline='middle';
   const txt=(medal?medal+' ':'')+city;
-  x.fillStyle='#17130D';x.fillText(txt,210,58);
+  x.fillStyle='#17130D';x.fillText(txt,150,58);
   return new THREE.CanvasTexture(c);
 }
 function labelSprite(city){
   const m=new THREE.SpriteMaterial({map:labelCanvas(city,0),transparent:true,depthTest:true});
-  const s=new THREE.Sprite(m);s.scale.set(39,10.2,1);return s;
+  const s=new THREE.Sprite(m);s.scale.set(27.8,10.2,1);return s;
 }
 
 /* ===== 서울 → 각 도시 항로(아크) + 비행기 ===== */
