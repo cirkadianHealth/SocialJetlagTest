@@ -258,7 +258,7 @@ function buildArc(from,to){
   const p1=ll2v(from.lat,from.lon,R).normalize();
   const p2=ll2v(to.lat,to.lon,R).normalize();
   const angle=p1.angleTo(p2);
-  const segs=48, arcH=Math.min(14,4+angle*8);
+  const segs=48, arcH=Math.min(7,2+angle*4);
   const pts=[];
   for(let i=0;i<=segs;i++){
     const t=i/segs, sinA=Math.sin(angle);
