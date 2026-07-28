@@ -341,6 +341,7 @@ function init(){
   globe.add(new THREE.Points(gLand,new THREE.PointsMaterial({size:2.9,vertexColors:true,sizeAttenuation:true})));
 
   pinLayer=new THREE.Group();globe.add(pinLayer);
+  seedAllLandmarks();
 
   addEventListener('resize',()=>{camera.aspect=innerWidth/innerHeight;camera.updateProjectionMatrix();renderer.setSize(innerWidth,innerHeight);});
   animate();
@@ -351,33 +352,39 @@ function updateRanks(){
   const arr=Object.values(pinsByKey).sort((a,b)=>b.count-a.count);
   arr.forEach((p,i)=>{
     const sc=20+Math.min(p.count,22)*1.9; p.ico.scale.set(sc,sc,1);
-    const rank=i<3?i+1:0;
+    const rank=(i<3&&p.count>0)?i+1:0;
     if(p._rank!==rank){ p._rank=rank; p.lab.material.map=labelCanvas(p.city,rank); p.lab.material.needsUpdate=true; }
   });
 }
 
+// 핀(기둥+랜드마크+라벨) 비주얼만 생성 — 참가 카운트/항로와는 별개
+function createPinVisual(c){
+  const grp=new THREE.Group();
+  const base=ll2v(c.lat,c.lon,R),dir=base.clone().normalize();
+  // 검은 기둥
+  const top=dir.clone().multiplyScalar(R+9);
+  grp.add(new THREE.Line(new THREE.BufferGeometry().setFromPoints([base,top]),
+    new THREE.LineBasicMaterial({color:0x17130D})));
+  // 랜드마크 이모지 — 기둥 위, 기준 높이
+  const ico=emojiSprite(c.icon,120,26);ico.position.copy(dir.clone().multiplyScalar(R+16));grp.add(ico);
+  // 도시 라벨 — 랜드마크와 같은 높이(반지름)에서, 화면상으로만 위로 살짝 띄워서 안 겹치게
+  const lab=labelSprite(c.city);
+  lab.position.copy(dir.clone().multiplyScalar(R+16));
+  lab.position.y+=16;
+  grp.add(lab);
+  pinLayer.add(grp);
+  return pinsByKey[c.key]={grp,ico,lab,city:c.city,base:R+16,dir,count:0,born:performance.now()};
+}
+// 기본 세팅: 참가자 없어도 모든 도시 랜드마크를 카운트 0으로 미리 띄워둠
+function seedAllLandmarks(){
+  CITIES.forEach(c=>{ if(!pinsByKey[c.key]) createPinVisual(c); });
+}
+
 function addPin(c){
-  let p=pinsByKey[c.key];
-  if(!p){
-    const grp=new THREE.Group();
-    const base=ll2v(c.lat,c.lon,R),dir=base.clone().normalize();
-    // 검은 기둥
-    const top=dir.clone().multiplyScalar(R+9);
-    grp.add(new THREE.Line(new THREE.BufferGeometry().setFromPoints([base,top]),
-      new THREE.LineBasicMaterial({color:0x17130D})));
-    // 랜드마크 이모지 — 기둥 위, 기준 높이
-    const ico=emojiSprite(c.icon,120,26);ico.position.copy(dir.clone().multiplyScalar(R+16));grp.add(ico);
-    // 도시 라벨 — 랜드마크와 같은 높이(반지름)에서, 화면상으로만 위로 살짝 띄워서 안 겹치게
-    const lab=labelSprite(c.city);
-    lab.position.copy(dir.clone().multiplyScalar(R+16));
-    lab.position.y+=16;
-    grp.add(lab);
-    pinLayer.add(grp);
-    p=pinsByKey[c.key]={grp,ico,lab,city:c.city,base:R+16,dir,count:0,born:performance.now()};
-    ensureArc(c);
-  }
+  let p=pinsByKey[c.key]||createPinVisual(c);
   p.count++;p.born=performance.now();
   stampHeat(c.lon,c.lat);
+  ensureArc(c);
 }
 
 /* ===== 보드/데이터 ===== */

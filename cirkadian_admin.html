@@ -97,7 +97,7 @@ table.entries button:active{transform:translate(1px,1px)}
     <span class="bar">🗂️ 최근 응답 (최신 100개)</span>
     <div class="scroll">
       <table class="entries">
-        <thead><tr><th>시각</th><th>도시</th><th>사회적 시차</th><th></th></tr></thead>
+        <thead><tr><th>일시</th><th>도시</th><th>사회적 시차</th><th></th></tr></thead>
         <tbody id="entries-body"></tbody>
       </table>
     </div>
@@ -209,8 +209,9 @@ function renderEntries(){
   tbody.innerHTML=latest.map(r=>{
     const info=CITY_INFO[r.city_key]||{city:r.city_key,icon:'🌐'};
     const t=new Date(r.created_at);
+    const mmdd=String(t.getMonth()+1).padStart(2,'0')+'-'+String(t.getDate()).padStart(2,'0');
     const hhmm=String(t.getHours()).padStart(2,'0')+':'+String(t.getMinutes()).padStart(2,'0');
-    return `<tr><td>${hhmm}</td><td>${info.icon} ${info.city}</td><td>${fmtH(r.social_jetlag_min)}</td>
+    return `<tr><td>${mmdd} ${hhmm}</td><td>${info.icon} ${info.city}</td><td>${fmtH(r.social_jetlag_min)}</td>
       <td><button onclick="requireAuth(()=>deleteEntry('${r.submission_id}'))">삭제</button></td></tr>`;
   }).join('');
 }
