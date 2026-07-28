@@ -230,10 +230,13 @@ const app=document.getElementById('app');
 function ll2v(lat,lon,r){const phi=(90-lat)*Math.PI/180,theta=(lon+180)*Math.PI/180;
   return new THREE.Vector3(-r*Math.sin(phi)*Math.cos(theta),r*Math.cos(phi),r*Math.sin(phi)*Math.sin(theta));}
 
-function emojiSprite(ch,px,scale){
+function emojiTex(ch,px){
   const c=document.createElement('canvas');c.width=c.height=160;const x=c.getContext('2d');
   x.textAlign='center';x.textBaseline='middle';x.font=px+'px sans-serif';x.fillText(ch,80,88);
-  const m=new THREE.SpriteMaterial({map:new THREE.CanvasTexture(c),transparent:true,depthTest:true});
+  return new THREE.CanvasTexture(c);
+}
+function emojiSprite(ch,px,scale){
+  const m=new THREE.SpriteMaterial({map:emojiTex(ch,px),transparent:true,depthTest:true});
   const s=new THREE.Sprite(m);s.scale.set(scale,scale,1);return s;
 }
 function labelCanvas(city,rank){
@@ -246,9 +249,12 @@ function labelCanvas(city,rank){
   x.fillStyle='#17130D';x.fillText(txt,150,58);
   return new THREE.CanvasTexture(c);
 }
-function labelSprite(city){
-  const m=new THREE.SpriteMaterial({map:labelCanvas(city,0),transparent:true,depthTest:true});
-  const s=new THREE.Sprite(m);s.scale.set(27.8,10.2,1);return s;
+function placeholderLabelSprite(){
+  const c=document.createElement('canvas');c.width=300;c.height=110;const x=c.getContext('2d');
+  x.font='900 46px "Noto Sans KR",sans-serif';x.textAlign='center';x.textBaseline='middle';
+  x.fillStyle='#8A7B5E';x.fillText('???',150,58);
+  const m=new THREE.SpriteMaterial({map:new THREE.CanvasTexture(c),transparent:true,depthTest:true});
+  const s=new THREE.Sprite(m);s.scale.set(16,5.9,1);return s;
 }
 
 /* ===== 서울 → 각 도시 항로(아크) + 비행기 ===== */
@@ -364,33 +370,42 @@ const pinsByKey={};
 function updateRanks(){
   const arr=Object.values(pinsByKey).sort((a,b)=>b.count-a.count);
   arr.forEach((p,i)=>{
+    if(!p.revealed)return;
     const sc=20+Math.min(p.count,22)*1.9; p.ico.scale.set(sc,sc,1);
     const rank=(i<3&&p.count>0)?i+1:0;
     if(p._rank!==rank){ p._rank=rank; p.lab.material.map=labelCanvas(p.city,rank); p.lab.material.needsUpdate=true; }
   });
 }
 
-// 핀(기둥+랜드마크+라벨) 비주얼만 생성 — 참가 카운트/항로와는 별개
+// 핀(기둥+랜드마크+라벨) 비주얼만 생성 — 아직 아무도 등록 안 했으면 ???로, 참가 카운트/항로와는 별개
 function createPinVisual(c){
   const grp=new THREE.Group();
   const base=ll2v(c.lat,c.lon,R),dir=base.clone().normalize();
-  // 랜드마크 이모지 — 기준 높이
-  const ico=emojiSprite(c.icon,120,26);ico.position.copy(dir.clone().multiplyScalar(R+16));grp.add(ico);
-  // 도시 라벨 — 랜드마크와 같은 높이(반지름)에서, 화면상으로만 위로 살짝 띄워서 안 겹치게
-  const lab=labelSprite(c.city);
+  const ico=emojiSprite('?',90,14);ico.position.copy(dir.clone().multiplyScalar(R+16));grp.add(ico);
+  const lab=placeholderLabelSprite();
   lab.position.copy(dir.clone().multiplyScalar(R+16));
   lab.position.y+=16;
   grp.add(lab);
   pinLayer.add(grp);
-  return pinsByKey[c.key]={grp,ico,lab,city:c.city,base:R+16,dir,count:0,born:performance.now()};
+  return pinsByKey[c.key]={grp,ico,lab,city:c.city,base:R+16,dir,count:0,born:performance.now(),revealed:false};
 }
-// 기본 세팅: 참가자 없어도 모든 도시 랜드마크를 카운트 0으로 미리 띄워둠
+// 기본 세팅: 참가자 없어도 모든 도시 랜드마크를 카운트 0으로 미리 띄워둠 (???로)
 function seedAllLandmarks(){
   CITIES.forEach(c=>{ if(!pinsByKey[c.key]) createPinVisual(c); });
+}
+// 처음 등록이 들어오면 ???를 실제 랜드마크/도시명으로 교체
+function revealPin(p,c){
+  if(p.revealed)return;
+  p.revealed=true;
+  p.ico.material.map=emojiTex(c.icon,120);p.ico.material.needsUpdate=true;
+  p.ico.scale.set(20,20,1);
+  p.lab.material.map=labelCanvas(c.city,0);p.lab.material.needsUpdate=true;
+  p.lab.scale.set(27.8,10.2,1);
 }
 
 function addPin(c){
   let p=pinsByKey[c.key]||createPinVisual(c);
+  if(!p.revealed)revealPin(p,c);
   p.count++;p.born=performance.now();
   stampHeat(c.lon,c.lat);
 }
@@ -474,7 +489,8 @@ function animate(){
     const r=p.base+Math.sin(t/500+p.dir.x)*1.5;
     p.ico.position.copy(p.dir.clone().multiplyScalar(r));
     const op=Math.min(1,Math.max(0,(p.dir.dot(viewDir)+0.12)/0.28));
-    p.ico.material.opacity=op;p.lab.material.opacity=op;
+    const dim=p.revealed?1:0.4;
+    p.ico.material.opacity=op*dim;p.lab.material.opacity=op*dim;
   }
   if(activeArc){
     const elapsed=t-activeArc.startT,prog=Math.min(1,elapsed/activeArc.duration);
