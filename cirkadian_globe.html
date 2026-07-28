@@ -316,7 +316,7 @@ function init(){
   renderer.setPixelRatio(Math.min(devicePixelRatio,2));renderer.setSize(innerWidth,innerHeight);
   app.appendChild(renderer.domElement);
 
-  globe=new THREE.Group();scene.add(globe);globe.rotation.z=0.26;globe.position.y=-82;
+  globe=new THREE.Group();scene.add(globe);globe.rotation.z=0.26;globe.position.y=-88;
 
   // 크림 코어 (뒷면 점 가림)
   globe.add(new THREE.Mesh(new THREE.SphereGeometry(R*0.98,48,48),
