@@ -132,9 +132,10 @@ const SUPABASE_ANON_KEY='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYm
 const ADMIN_PASSWORD='0000';
 const supa=window.supabase.createClient(SUPABASE_URL,SUPABASE_ANON_KEY);
 
-const CITY_ORDER=['SEL','PEK','BKK','DEL','DXB','NBO','MOW','ROM','LON','NYC','SFO'];
+const CITY_ORDER=['SEL','OSA','TOK','PEK','BKK','DEL','DXB','NBO','MOW','ROM','LON','NYC','SFO'];
 const CITY_INFO={
-  SEL:{city:'서울',icon:'🗼'}, PEK:{city:'베이징',icon:'🏯'}, BKK:{city:'방콕',icon:'🛕'},
+  SEL:{city:'서울',icon:'🗼'}, OSA:{city:'오사카',icon:'🗻'}, TOK:{city:'도쿄',icon:'⛩️'},
+  PEK:{city:'베이징',icon:'🐼'}, BKK:{city:'방콕',icon:'🛕'},
   DEL:{city:'델리',icon:'🕌'}, DXB:{city:'두바이',icon:'🏙️'}, NBO:{city:'나이로비',icon:'🦁'},
   MOW:{city:'모스크바',icon:'🏰'}, ROM:{city:'로마',icon:'🏛️'}, LON:{city:'런던',icon:'🎡'},
   NYC:{city:'뉴욕',icon:'🗽'}, SFO:{city:'샌프란시스코',icon:'🌉'}

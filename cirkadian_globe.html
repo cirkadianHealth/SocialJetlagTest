@@ -136,7 +136,9 @@ try{new QRCode(document.getElementById('survey-qr'),{text:SURVEY_URL,width:78,he
 /* ===== 도시 매핑 (A안: 서울→서쪽) ===== */
 const CITIES=[
   {key:'SEL',city:'서울',lm:'남산서울타워',emoji:'🇰🇷',icon:'🗼',lat:37.55,lon:126.99,max:0.4,quip:'생체시계 시차 0. 이 구역의 갓생러'},
-  {key:'PEK',city:'베이징',lm:'자금성',emoji:'🇨🇳',icon:'🏯',lat:39.92,lon:116.40,max:0.9,quip:'살짝 어긋난 시계. 주말에 늦잠 좀 잤죠?'},
+  {key:'OSA',city:'오사카',lm:'오사카성',emoji:'🇯🇵',icon:'🗻',lat:34.69,lon:135.50,max:0.6,quip:'가까운 오사카, 그래도 주말마다 왕복 중'},
+  {key:'TOK',city:'도쿄',lm:'도쿄타워',emoji:'🇯🇵',icon:'⛩️',lat:35.68,lon:139.65,max:0.9,quip:'도쿄 정도는 매주 다녀올 만하죠'},
+  {key:'PEK',city:'베이징',lm:'자금성',emoji:'🇨🇳',icon:'🐼',lat:39.92,lon:116.40,max:1.3,quip:'살짝 어긋난 시계. 주말에 늦잠 좀 잤죠?'},
   {key:'BKK',city:'방콕',lm:'왓 아룬',emoji:'🇹🇭',icon:'🛕',lat:13.74,lon:100.49,max:1.5,quip:'몸은 이미 동남아 휴양 모드'},
   {key:'DEL',city:'델리',lm:'타지마할',emoji:'🇮🇳',icon:'🕌',lat:28.61,lon:77.20,max:2.1,quip:'몸의 절반은 인도 어딘가를 여행 중'},
   {key:'DXB',city:'두바이',lm:'부르즈 할리파',emoji:'🇦🇪',icon:'🏙️',lat:25.20,lon:55.27,max:2.75,quip:'몸만 중동에 두고 오셨네요'},
@@ -249,7 +251,7 @@ function labelSprite(city){
 }
 
 /* ===== 서울 → 각 도시 항로(아크) + 비행기 ===== */
-const ARC_HOURS={PEK:'+1h',BKK:'+1.5h',DEL:'+2h',DXB:'+2.75h',NBO:'+3.25h',MOW:'+3.75h',ROM:'+4.75h',LON:'+6.5h',NYC:'+8.5h',SFO:'+9h+'};
+const ARC_HOURS={OSA:'+0.6h',TOK:'+0.9h',PEK:'+1.3h',BKK:'+1.5h',DEL:'+2h',DXB:'+2.75h',NBO:'+3.25h',MOW:'+3.75h',ROM:'+4.75h',LON:'+6.5h',NYC:'+8.5h',SFO:'+9h+'};
 const arcs={};
 function buildArc(from,to){
   const p1=ll2v(from.lat,from.lon,R).normalize();
