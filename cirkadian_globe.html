@@ -355,7 +355,6 @@ function init(){
 
   pinLayer=new THREE.Group();globe.add(pinLayer);
   seedAllLandmarks();
-  CITIES.forEach(c=>ensureArc(c));
 
   addEventListener('resize',()=>{camera.aspect=innerWidth/innerHeight;camera.updateProjectionMatrix();renderer.setSize(innerWidth,innerHeight);});
   animate();
@@ -394,7 +393,6 @@ function addPin(c){
   let p=pinsByKey[c.key]||createPinVisual(c);
   p.count++;p.born=performance.now();
   stampHeat(c.lon,c.lat);
-  ensureArc(c);
 }
 
 /* ===== 보드/데이터 ===== */
