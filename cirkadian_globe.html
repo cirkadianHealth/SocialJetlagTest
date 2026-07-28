@@ -271,7 +271,7 @@ function init(){
     new THREE.MeshBasicMaterial({map:globeTex})));
 
   // 대륙 픽셀 점 (육지=진한 오렌지)
-  const cLand=new THREE.Color(0xFE933F);
+  const cLand=new THREE.Color(0xF77F27);
   const landPts=[],landCols=[];
   for(let lat=-84;lat<=84;lat+=2.2){for(let lon=-180;lon<180;lon+=2.2){
     if(isLand(lon,lat)){const v=ll2v(lat,lon,R);landPts.push(v.x,v.y,v.z);landCols.push(cLand.r,cLand.g,cLand.b);}
