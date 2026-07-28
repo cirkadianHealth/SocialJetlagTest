@@ -150,6 +150,7 @@ svg.day{width:100%;height:auto;display:block}
 /* ===== 인스타 스토리용 9:16 이미지 (canvas로 직접 그려서 다운로드) ===== */
 .sharebtn{width:100%;font-family:var(--kr);font-weight:900;font-size:17px;border:3px solid var(--ink);background:var(--orange);color:var(--ink);padding:17px;box-shadow:5px 5px 0 var(--ink);cursor:pointer;margin-bottom:16px}
 .sharebtn:active{transform:translate(3px,3px);box-shadow:2px 2px 0 var(--ink)}
+.sharebtn:disabled{opacity:.6;cursor:default}
 .spop{display:none;position:fixed;inset:0;background:rgba(23,19,13,.8);z-index:60;align-items:center;justify-content:center;flex-direction:column;padding:20px}
 .spop.show{display:flex}
 .spop img{max-width:100%;max-height:70vh;border:3px solid var(--ink);box-shadow:6px 6px 0 rgba(0,0,0,.4)}
@@ -274,7 +275,7 @@ svg.day{width:100%;height:auto;display:block}
       <div class="cbody"><ul class="todo" id="r-todo"></ul></div>
     </div>
 
-    <button class="sharebtn" onclick="makeStory()">📸 인스타 스토리용 이미지 저장</button>
+    <button class="sharebtn" id="sharebtn" onclick="makeStory()">📸 인스타 스토리용 이미지 저장</button>
 
     <div class="card">
       <div class="foot">
@@ -627,7 +628,25 @@ function loadLogoImg(){
     img.src='logo.png';
   });
 }
+let storyBusy=false;
 async function makeStory(){
+  if(storyBusy)return;
+  storyBusy=true;
+  const btn=document.getElementById('sharebtn');
+  const btnText=btn.textContent;
+  btn.textContent='이미지 만드는 중…';
+  btn.disabled=true;
+  try{
+    await makeStoryInner();
+  }catch(e){
+    alert('이미지 생성에 실패했어요. 다시 시도해주세요.');
+  }finally{
+    btn.textContent=btnText;
+    btn.disabled=false;
+    storyBusy=false;
+  }
+}
+async function makeStoryInner(){
   const cv=document.getElementById('storyCanvas'),x=cv.getContext('2d');
   const W=1080,H=1920;
   try{
@@ -745,14 +764,14 @@ async function makeStory(){
   x.fillStyle='#B85C0E'; x.font='26px "Press Start 2P", monospace';
   x.fillText('@CIRKADIANOFFICIAL',W/2,1832);
 
-  cv.toBlob(b=>{
-    const url=URL.createObjectURL(b);
-    const a=document.createElement('a');
-    a.href=url; a.download=`CIRKADIAN_${(STORY.title||'result').replace(/\s/g,'_')}.png`;
-    document.body.appendChild(a); a.click(); a.remove();
-    document.getElementById('spop-img').src=url;
-    document.getElementById('spop').classList.add('show');
-  },'image/png');
+  // blob: URL은 일부 안드로이드 브라우저(삼성인터넷 등)에서 길게 눌러 저장이 안 먹혀서
+  // data: URL로 통일 — <a download>와 롱프레스 저장 둘 다 이게 훨씬 안정적으로 동작함
+  const dataUrl=cv.toDataURL('image/png');
+  const a=document.createElement('a');
+  a.href=dataUrl; a.download=`CIRKADIAN_${(STORY.title||'result').replace(/\s/g,'_')}.png`;
+  document.body.appendChild(a); a.click(); a.remove();
+  document.getElementById('spop-img').src=dataUrl;
+  document.getElementById('spop').classList.add('show');
 }
 
 async function submitAnon(d){
