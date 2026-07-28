@@ -1,6 +1,7 @@
 {
   "rewrites": [
     { "source": "/", "destination": "/cirkadian_jetlag_test.html" },
-    { "source": "/board", "destination": "/cirkadian_globe.html" }
+    { "source": "/board", "destination": "/cirkadian_globe.html" },
+    { "source": "/admin", "destination": "/cirkadian_admin.html" }
   ]
 }
