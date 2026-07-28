@@ -383,7 +383,7 @@ function updateRanks(){
 function createPinVisual(c){
   const grp=new THREE.Group();
   const base=ll2v(c.lat,c.lon,R),dir=base.clone().normalize();
-  const ico=emojiSprite('?',90,14);ico.position.copy(dir.clone().multiplyScalar(R+16));grp.add(ico);
+  const ico=emojiSprite('❓',90,14);ico.position.copy(dir.clone().multiplyScalar(R+16));grp.add(ico);
   const lab=placeholderLabelSprite();
   lab.position.copy(dir.clone().multiplyScalar(R+16));
   lab.position.y+=16;
