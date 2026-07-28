@@ -248,6 +248,66 @@ function labelSprite(city){
   const s=new THREE.Sprite(m);s.scale.set(39,10.2,1);return s;
 }
 
+/* ===== 서울 → 각 도시 항로(아크) + 비행기 ===== */
+const ARC_HOURS={PEK:'+1h',BKK:'+1.5h',DEL:'+2h',DXB:'+2.75h',NBO:'+3.25h',MOW:'+3.75h',ROM:'+4.75h',LON:'+6.5h',NYC:'+8.5h',SFO:'+9h+'};
+const arcs={};
+function buildArc(from,to){
+  const p1=ll2v(from.lat,from.lon,R).normalize();
+  const p2=ll2v(to.lat,to.lon,R).normalize();
+  const angle=p1.angleTo(p2);
+  const segs=48, arcH=Math.min(60,18+angle*35);
+  const pts=[];
+  for(let i=0;i<=segs;i++){
+    const t=i/segs, sinA=Math.sin(angle);
+    let a,b;
+    if(sinA<1e-6){a=1-t;b=t;} else {a=Math.sin((1-t)*angle)/sinA;b=Math.sin(t*angle)/sinA;}
+    const dir=p1.clone().multiplyScalar(a).add(p2.clone().multiplyScalar(b)).normalize();
+    pts.push(dir.multiplyScalar(R+Math.sin(Math.PI*t)*arcH));
+  }
+  return pts;
+}
+function arcLabelSprite(text){
+  const c=document.createElement('canvas');c.width=180;c.height=60;const x=c.getContext('2d');
+  x.fillStyle='#17130D';x.fillRect(3,3,174,54);
+  x.fillStyle='#FFF3D6';x.fillRect(7,7,166,46);
+  x.font='900 28px "Noto Sans KR",sans-serif';x.textAlign='center';x.textBaseline='middle';
+  x.fillStyle='#F77F27';x.fillText(text,90,32);
+  const m=new THREE.SpriteMaterial({map:new THREE.CanvasTexture(c),transparent:true,depthTest:true});
+  const s=new THREE.Sprite(m);s.scale.set(17,5.7,1);return s;
+}
+function buildAllArcs(){
+  const sel=CITIES.find(c=>c.key==='SEL');
+  CITIES.forEach(c=>{
+    if(c.key==='SEL')return;
+    const pts=buildArc(sel,c);
+    const geo=new THREE.BufferGeometry().setFromPoints(pts);
+    const mat=new THREE.LineDashedMaterial({color:0xF77F27,transparent:true,opacity:0.5,dashSize:2.4,gapSize:1.6});
+    const line=new THREE.Line(geo,mat);line.computeLineDistances();
+    pinLayer.add(line);
+    const label=arcLabelSprite(ARC_HOURS[c.key]||'');
+    label.position.copy(pts[Math.round(pts.length*0.5)]);
+    pinLayer.add(label);
+    arcs[c.key]={pts,planes:[]};
+  });
+}
+function updateArcPlanes(agg){
+  for(const key in arcs){
+    const arc=arcs[key];
+    const n=agg[key]?agg[key].n:0;
+    const desired=Math.min(6,1+n); // 기본 1대 + 참가자만큼 최대 6대
+    while(arc.planes.length<desired){
+      const pl=emojiSprite('✈️',100,9);
+      pl._t=Math.random();
+      pl._speed=0.00028+Math.random()*0.00022;
+      pinLayer.add(pl);
+      arc.planes.push(pl);
+    }
+    while(arc.planes.length>desired){
+      pinLayer.remove(arc.planes.pop());
+    }
+  }
+}
+
 function init(){
   scene=new THREE.Scene();
   camera=new THREE.PerspectiveCamera(38,innerWidth/innerHeight,1,3000);
@@ -282,6 +342,7 @@ function init(){
   globe.add(new THREE.Points(gLand,new THREE.PointsMaterial({size:2.9,vertexColors:true,sizeAttenuation:true})));
 
   pinLayer=new THREE.Group();globe.add(pinLayer);
+  buildAllArcs();
 
   addEventListener('resize',()=>{camera.aspect=innerWidth/innerHeight;camera.updateProjectionMatrix();renderer.setSize(innerWidth,innerHeight);});
   animate();
@@ -329,6 +390,7 @@ function addEntry(name,hours){
 function renderBoard(){
   document.getElementById('total').textContent=total;
   const agg={};for(const e of entries){const k=e.c.key;if(!agg[k])agg[k]={c:e.c,n:0};agg[k].n++;}
+  updateArcPlanes(agg);
   const rows=Object.values(agg).sort((a,b)=>b.n-a.n);
   document.getElementById('list').innerHTML=rows.map(r=>{
     const pct=total>0?Math.round(r.n/total*100):0;
@@ -364,6 +426,15 @@ function animate(){
   else globe.rotation.y+=0.0015;
   const t=performance.now();
   for(const k in pinsByKey){const p=pinsByKey[k];const r=p.base+Math.sin(t/500+p.dir.x)*1.5;p.ico.position.copy(p.dir.clone().multiplyScalar(r));}
+  for(const key in arcs){
+    const arc=arcs[key];
+    arc.planes.forEach(pl=>{
+      pl._t+=pl._speed;
+      if(pl._t>1)pl._t-=1;
+      const idx=Math.min(arc.pts.length-1,Math.floor(pl._t*(arc.pts.length-1)));
+      pl.position.copy(arc.pts[idx]);
+    });
+  }
   renderer.render(scene,camera);
 }
 
