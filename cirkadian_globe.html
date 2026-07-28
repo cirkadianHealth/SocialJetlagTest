@@ -251,6 +251,8 @@ function labelCanvas(city,rank){
 }
 function placeholderLabelSprite(){
   const c=document.createElement('canvas');c.width=300;c.height=110;const x=c.getContext('2d');
+  x.fillStyle='#8A7B5E';x.fillRect(6,6,288,98);
+  x.fillStyle='#FFF3D6';x.fillRect(12,12,276,86);
   x.font='900 46px "Noto Sans KR",sans-serif';x.textAlign='center';x.textBaseline='middle';
   x.fillStyle='#8A7B5E';x.fillText('???',150,58);
   const m=new THREE.SpriteMaterial({map:new THREE.CanvasTexture(c),transparent:true,depthTest:true});
