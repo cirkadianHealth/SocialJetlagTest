@@ -276,19 +276,31 @@ function arcLabelSprite(text){
   const m=new THREE.SpriteMaterial({map:new THREE.CanvasTexture(c),transparent:true,depthTest:true});
   const s=new THREE.Sprite(m);s.scale.set(17,5.7,1);return s;
 }
-// 모든 도시 항로를 미리 그려두고, 참가자가 생기면 비행기만 추가됨
+let dotTex=null;
+function getDotTex(){
+  if(dotTex)return dotTex;
+  const c=document.createElement('canvas');c.width=32;c.height=32;const x=c.getContext('2d');
+  x.beginPath();x.arc(16,16,14,0,Math.PI*2);x.fillStyle='#000';x.fill();
+  return dotTex=new THREE.CanvasTexture(c);
+}
+// 모든 도시 항로를 미리 그려두고, 참가자가 생기면 비행기만 추가됨 (두꺼운 점선: 실선은 WebGL에서 두께 조절이 안 돼서 점 스프라이트로 표현)
 function ensureArc(c){
   if(c.key==='SEL'||arcs[c.key])return;
   const sel=CITIES.find(x=>x.key==='SEL');
   const pts=buildArc(sel,c);
-  const geo=new THREE.BufferGeometry().setFromPoints(pts);
-  const mat=new THREE.LineBasicMaterial({color:0x000000,transparent:true,opacity:0.4});
-  const line=new THREE.Line(geo,mat);
-  pinLayer.add(line);
+  const mat=new THREE.SpriteMaterial({map:getDotTex(),transparent:true,opacity:0.5,depthTest:true});
+  const dots=[];
+  for(let i=0;i<pts.length;i+=3){
+    const s=new THREE.Sprite(mat);
+    s.scale.set(3.4,3.4,1);
+    s.position.copy(pts[i]);
+    pinLayer.add(s);
+    dots.push(s);
+  }
   const label=arcLabelSprite(ARC_HOURS[c.key]||'');
   label.position.copy(pts[Math.round(pts.length*0.5)]);
   pinLayer.add(label);
-  arcs[c.key]={pts,planes:[],line};
+  arcs[c.key]={pts,planes:[],mat,dots};
 }
 function updateArcPlanes(agg){
   for(const key in arcs){
@@ -343,6 +355,7 @@ function init(){
 
   pinLayer=new THREE.Group();globe.add(pinLayer);
   seedAllLandmarks();
+  CITIES.forEach(c=>ensureArc(c));
 
   addEventListener('resize',()=>{camera.aspect=innerWidth/innerHeight;camera.updateProjectionMatrix();renderer.setSize(innerWidth,innerHeight);});
   animate();
@@ -381,6 +394,7 @@ function addPin(c){
   let p=pinsByKey[c.key]||createPinVisual(c);
   p.count++;p.born=performance.now();
   stampHeat(c.lon,c.lat);
+  ensureArc(c);
 }
 
 /* ===== 보드/데이터 ===== */
@@ -436,7 +450,7 @@ function animate(){
   for(const k in pinsByKey){const p=pinsByKey[k];const r=p.base+Math.sin(t/500+p.dir.x)*1.5;p.ico.position.copy(p.dir.clone().multiplyScalar(r));}
   for(const key in arcs){
     const arc=arcs[key];
-    if(arc.line)arc.line.material.opacity=(key===flashKey)?(0.3+0.55*(0.5+0.5*Math.sin(t/120))):0.5;
+    if(arc.mat)arc.mat.opacity=(key===flashKey)?(0.3+0.55*(0.5+0.5*Math.sin(t/120))):0.5;
     arc.planes.forEach(pl=>{
       pl._t+=pl._speed;
       if(pl._t>1)pl._t-=1;
