@@ -399,7 +399,7 @@ function addPin(c){
 let entries=[],total=0;
 function addEntry(name,hours){
   const c=cityFor(hours);addPin(c);entries.push({name,hours,c});total++;
-  updateRanks();showFly(c,hours,name);spinTo(c);renderBoard();
+  updateRanks();beginReveal(c);showFly(c,hours,name);renderBoard();
 }
 function renderBoard(){
   document.getElementById('total').textContent=total;
@@ -430,19 +430,41 @@ function showFly(c,hours,name){
   document.getElementById('fly-lm').textContent=c.lm;
   document.getElementById('fly-jt').textContent='사회적 시차 '+fmtH(hours)+' · '+c.quip;
   const f=document.getElementById('flyin');f.classList.add('show');
-  clearTimeout(showFly._t);showFly._t=setTimeout(()=>{f.classList.remove('show');startFlash(c);},5000);
+  clearTimeout(showFly._t);showFly._t=setTimeout(()=>f.classList.remove('show'),5000);
 }
 
-let targetY=null,flashKey=null,flashUntil=0,rotationLocked=false;
+let targetY=null,rotationLocked=false,revealUntil=0,activeArc=null;
 function spinTo(c){const theta=(c.lon+180)*Math.PI/180;targetY=-theta+Math.PI/2;}
-function startFlash(c){
-  flashKey=c.key;flashUntil=performance.now()+4500;rotationLocked=true;
+function beginReveal(c){
+  rotationLocked=true;revealUntil=performance.now()+5000;
   spinTo(c);
+  buildRevealArc(c);
+}
+function buildRevealArc(c){
+  clearActiveArc();
+  if(c.key==='SEL')return;
+  const sel=CITIES.find(x=>x.key==='SEL');
+  const pts=buildArc(sel,c);
+  const mat=new THREE.SpriteMaterial({map:getDotTex(),transparent:true,opacity:0.6,depthTest:true});
+  const dots=pts.filter((_,i)=>i%3===0).map(pt=>{
+    const s=new THREE.Sprite(mat);s.scale.set(0,0,1);s.position.copy(pt);pinLayer.add(s);return s;
+  });
+  const label=arcLabelSprite(ARC_HOURS[c.key]||'');
+  label.position.copy(pts[Math.round(pts.length*0.5)]);
+  label.material.opacity=0;
+  pinLayer.add(label);
+  activeArc={dots,label,startT:performance.now(),duration:1300};
+}
+function clearActiveArc(){
+  if(!activeArc)return;
+  activeArc.dots.forEach(d=>pinLayer.remove(d));
+  pinLayer.remove(activeArc.label);
+  activeArc=null;
 }
 function animate(){
   requestAnimationFrame(animate);
   const t=performance.now();
-  if(flashKey&&t>flashUntil){flashKey=null;rotationLocked=false;}
+  if(rotationLocked&&t>revealUntil){rotationLocked=false;clearActiveArc();}
   if(targetY!==null){let d=targetY-globe.rotation.y;d=Math.atan2(Math.sin(d),Math.cos(d));globe.rotation.y+=d*0.06;if(Math.abs(d)<0.01)targetY=null;}
   else if(!rotationLocked){globe.rotation.y+=0.0026;}
   globe.updateMatrixWorld(true);
@@ -454,9 +476,14 @@ function animate(){
     const op=Math.min(1,Math.max(0,(p.dir.dot(viewDir)+0.12)/0.28));
     p.ico.material.opacity=op;p.lab.material.opacity=op;
   }
+  if(activeArc){
+    const elapsed=t-activeArc.startT,prog=Math.min(1,elapsed/activeArc.duration);
+    const revealCount=Math.floor(prog*activeArc.dots.length);
+    activeArc.dots.forEach((d,i)=>{const sc=i<revealCount?3.4:0;d.scale.set(sc,sc,1);});
+    activeArc.label.material.opacity=prog>=1?Math.min(1,(elapsed-activeArc.duration)/300):0;
+  }
   for(const key in arcs){
     const arc=arcs[key];
-    if(arc.mat)arc.mat.opacity=(key===flashKey)?(0.3+0.55*(0.5+0.5*Math.sin(t/120))):0.5;
     arc.planes.forEach(pl=>{
       pl._t+=pl._speed;
       if(pl._t>1)pl._t-=1;
