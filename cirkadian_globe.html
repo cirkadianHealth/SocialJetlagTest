@@ -258,7 +258,7 @@ function buildArc(from,to){
   const p1=ll2v(from.lat,from.lon,R).normalize();
   const p2=ll2v(to.lat,to.lon,R).normalize();
   const angle=p1.angleTo(p2);
-  const segs=48, arcH=Math.min(26,8+angle*16);
+  const segs=48, arcH=Math.min(14,4+angle*8);
   const pts=[];
   for(let i=0;i<=segs;i++){
     const t=i/segs, sinA=Math.sin(angle);
@@ -271,8 +271,6 @@ function buildArc(from,to){
 }
 function arcLabelSprite(text){
   const c=document.createElement('canvas');c.width=180;c.height=60;const x=c.getContext('2d');
-  x.fillStyle='#17130D';x.fillRect(3,3,174,54);
-  x.fillStyle='#FFF3D6';x.fillRect(7,7,166,46);
   x.font='900 28px "Noto Sans KR",sans-serif';x.textAlign='center';x.textBaseline='middle';
   x.fillStyle='#F77F27';x.fillText(text,90,32);
   const m=new THREE.SpriteMaterial({map:new THREE.CanvasTexture(c),transparent:true,depthTest:true});
