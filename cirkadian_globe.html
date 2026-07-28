@@ -65,6 +65,7 @@ canvas{display:block}
 .flyin.show{opacity:1;transform:translate(-50%,-50%) scale(1)}
 .flyin .card{background:#fff;border:4px solid var(--ink);box-shadow:8px 8px 0 var(--ink);padding:22px 34px}
 .flyin .em{font-size:70px;line-height:1}
+.flyin .name{font-family:var(--pixel);font-size:14px;color:#F77F27;font-weight:900;margin-top:4px}
 .flyin .big{font-size:40px;font-weight:900;margin-top:6px}
 .flyin .lm{font-size:18px;color:var(--orange-d);font-weight:900;margin-top:2px}
 .flyin .jt{font-family:var(--pixel);font-size:12px;color:var(--muted);margin-top:10px}
@@ -111,6 +112,7 @@ canvas{display:block}
 <div class="flyin" id="flyin">
   <div class="card">
     <div class="em" id="fly-em"></div>
+    <div class="name" id="fly-name"></div>
     <div class="big" id="fly-city"></div>
     <div class="lm" id="fly-lm"></div>
     <div class="jt" id="fly-jt"></div>
@@ -393,7 +395,7 @@ function addPin(c){
 let entries=[],total=0;
 function addEntry(name,hours){
   const c=cityFor(hours);addPin(c);entries.push({name,hours,c});total++;
-  updateRanks();showFly(c,hours);spinTo(c);renderBoard();
+  updateRanks();showFly(c,hours,name);spinTo(c);renderBoard();
 }
 function renderBoard(){
   document.getElementById('total').textContent=total;
@@ -417,13 +419,14 @@ function renderPodium(){
     hrEl.textContent=fmtH(e.hours);
   }
 }
-function showFly(c,hours){
+function showFly(c,hours,name){
   document.getElementById('fly-em').textContent=c.icon;
+  document.getElementById('fly-name').textContent=name?name+' 님':'익명 님';
   document.getElementById('fly-city').textContent=c.emoji+' '+c.city;
   document.getElementById('fly-lm').textContent=c.lm;
   document.getElementById('fly-jt').textContent='사회적 시차 '+fmtH(hours)+' · '+c.quip;
   const f=document.getElementById('flyin');f.classList.add('show');
-  clearTimeout(showFly._t);showFly._t=setTimeout(()=>f.classList.remove('show'),2600);
+  clearTimeout(showFly._t);showFly._t=setTimeout(()=>f.classList.remove('show'),5000);
 }
 
 let targetY=null;
