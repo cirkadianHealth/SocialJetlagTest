@@ -272,7 +272,7 @@ function buildArc(from,to){
 function arcLabelSprite(text){
   const c=document.createElement('canvas');c.width=180;c.height=60;const x=c.getContext('2d');
   x.font='900 28px "Noto Sans KR",sans-serif';x.textAlign='center';x.textBaseline='middle';
-  x.fillStyle='#F77F27';x.fillText(text,90,32);
+  x.fillStyle='#B85C0E';x.fillText(text,90,32);
   const m=new THREE.SpriteMaterial({map:new THREE.CanvasTexture(c),transparent:true,depthTest:true});
   const s=new THREE.Sprite(m);s.scale.set(17,5.7,1);return s;
 }
@@ -282,8 +282,8 @@ function ensureArc(c){
   const sel=CITIES.find(x=>x.key==='SEL');
   const pts=buildArc(sel,c);
   const geo=new THREE.BufferGeometry().setFromPoints(pts);
-  const mat=new THREE.LineDashedMaterial({color:0x000000,transparent:true,opacity:0.5,dashSize:2.4,gapSize:1.6});
-  const line=new THREE.Line(geo,mat);line.computeLineDistances();
+  const mat=new THREE.LineBasicMaterial({color:0x000000,transparent:true,opacity:0.4});
+  const line=new THREE.Line(geo,mat);
   pinLayer.add(line);
   const label=arcLabelSprite(ARC_HOURS[c.key]||'');
   label.position.copy(pts[Math.round(pts.length*0.5)]);
