@@ -398,44 +398,21 @@ function createPinVisual(c){
 function seedAllLandmarks(){
   CITIES.forEach(c=>{ if(!pinsByKey[c.key]) createPinVisual(c); });
 }
-// 처음 등록이 들어오면(또는 예시 데이터로) ???를 실제 랜드마크/도시명으로 교체
-function revealPin(p,c,demo){
-  if(p.revealed){ if(!demo)p.demo=false; return; }
-  p.revealed=true;p.demo=!!demo;
+// 처음 등록이 들어오면 ???를 실제 랜드마크/도시명으로 교체
+function revealPin(p,c){
+  if(p.revealed)return;
+  p.revealed=true;
   p.ico.material.map=emojiTex(c.icon,120);p.ico.material.needsUpdate=true;
   p.ico.scale.set(20,20,1);
   p.lab.material.map=labelCanvas(c.city,0);p.lab.material.needsUpdate=true;
   p.lab.scale.set(27.8,10.2,1);
 }
-// 예시로만 공개돼 있던(실제 등록자는 없는) 핀을 다시 ???로 되돌림
-function placeholderizePin(p){
-  p.revealed=false;p.demo=false;
-  p.ico.material.map=emojiTex('❓',90);p.ico.material.needsUpdate=true;
-  p.ico.scale.set(14,14,1);
-  p.lab.material.map=placeholderLabelTex();p.lab.material.needsUpdate=true;
-  p.lab.scale.set(16,5.9,1);
-}
 
 function addPin(c){
   let p=pinsByKey[c.key]||createPinVisual(c);
-  if(!p.revealed||p.demo)revealPin(p,c,false);
+  if(!p.revealed)revealPin(p,c);
   p.count++;p.born=performance.now();
   stampHeat(c.lon,c.lat);
-}
-
-/* ===== 예시(데모) 데이터: 관리자 페이지 토글로 켜고 끌 수 있음. 실제 등록자가 아직 없는
-   랜드마크만 잠깐 실물처럼 보여주는 연출용이며, board_events/research_responses 어디에도
-   저장되지 않고 순위/통계(entries·total)에도 전혀 반영되지 않음. ===== */
-const DEMO_KEYS=['TOK','DXB','ROM','LON','NYC'];
-function showDemoPins(){
-  DEMO_KEYS.forEach(k=>{
-    const c=CITIES.find(x=>x.key===k);if(!c)return;
-    const p=pinsByKey[k]||createPinVisual(c);
-    if(!p.revealed)revealPin(p,c,true);
-  });
-}
-function hideDemoPins(){
-  Object.values(pinsByKey).forEach(p=>{ if(p.demo&&p.count===0)placeholderizePin(p); });
 }
 
 /* ===== 보드/데이터 ===== */
@@ -545,8 +522,7 @@ try{const bc=new BroadcastChannel('cirkadian');bc.onmessage=(e)=>{if(e.data&&typ
 /* ===== Supabase 실시간 랭킹 ===== */
 async function loadInitialBoard(){
   if(!supa)return;
-  const since=new Date(Date.now()-1000*60*60*12).toISOString(); // 최근 12시간
-  const {data,error}=await supa.from('board_events').select('city_key,social_jetlag_min,nickname,created_at').gte('created_at',since).order('created_at',{ascending:true}).limit(500);
+  const {data,error}=await supa.from('board_events').select('city_key,social_jetlag_min,nickname,created_at').order('created_at',{ascending:true}).limit(5000);
   if(error){console.warn('board load failed',error);return;}
   for(const row of data){
     const c=CITIES.find(x=>x.key===row.city_key);if(!c)continue;
@@ -563,23 +539,8 @@ function subscribeBoard(){
     })
     .subscribe();
 }
-async function loadDemoSetting(){
-  if(!supa)return;
-  const {data,error}=await supa.from('app_settings').select('demo_on').eq('id',1).maybeSingle();
-  if(error){console.warn('app_settings load failed',error);return;}
-  if(data&&data.demo_on)showDemoPins();else hideDemoPins();
-}
-function subscribeDemoSetting(){
-  if(!supa)return;
-  supa.channel('app_settings_live')
-    .on('postgres_changes',{event:'UPDATE',schema:'public',table:'app_settings'},(payload)=>{
-      if(payload.new.demo_on)showDemoPins();else hideDemoPins();
-    })
-    .subscribe();
-}
-
 init();renderBoard();
-if(supa){ loadInitialBoard(); subscribeBoard(); loadDemoSetting(); subscribeDemoSetting(); }
+if(supa){ loadInitialBoard(); subscribeBoard(); }
 </script>
 </body>
 </html>

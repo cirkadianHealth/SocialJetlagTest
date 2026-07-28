@@ -41,8 +41,6 @@ body{background:radial-gradient(1000px 700px at 50% 0%,#FFFFFF,#FFE6C4 55%,#FFD9
 .datetabs{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:12px}
 .datetab{font-family:var(--kr);font-weight:700;font-size:11.5px;border:2px solid var(--ink);background:#fff;color:var(--ink);padding:6px 10px;cursor:pointer}
 .datetab.active{background:var(--ink);color:#fff}
-.toggle-row{display:flex;align-items:center;gap:10px;font-weight:900;font-size:13px;cursor:pointer}
-.toggle-row input{width:20px;height:20px;accent-color:var(--ink)}
 table.entries{width:100%;border-collapse:collapse;font-size:12.5px}
 table.entries th{text-align:left;color:var(--muted);font-size:11px;font-weight:700;padding:4px 6px;border-bottom:2px solid var(--ink)}
 table.entries td{padding:7px 6px;border-bottom:1px solid var(--pale2)}
@@ -107,12 +105,6 @@ table.entries button:active{transform:translate(1px,1px)}
         <tbody id="entries-body"></tbody>
       </table>
     </div>
-  </div>
-
-  <div class="panel">
-    <span class="bar">🌐 지구본 예시 데이터</span>
-    <p style="font-size:11.5px;color:var(--muted);margin-bottom:12px;line-height:1.5">아직 등록자가 없는 랜드마크를 잠깐 실물처럼 보여주는 연출용이에요. 켜고 꺼도 실제 데이터로 저장되거나 통계·순위에는 전혀 반영되지 않아요.</p>
-    <label class="toggle-row"><input type="checkbox" id="demo-toggle" onchange="toggleDemo(this.checked)">지구본에 예시 랜드마크 표시</label>
   </div>
 
   <div class="panel danger">
@@ -261,16 +253,6 @@ async function resetAll(){
   await loadAll();
 }
 
-/* ===== 지구본 예시(데모) 랜드마크 토글 — app_settings 테이블 하나로 모니터 페이지와 실시간 동기화 ===== */
-async function loadDemoToggle(){
-  const {data,error}=await supa.from('app_settings').select('demo_on').eq('id',1).maybeSingle();
-  if(!error&&data)document.getElementById('demo-toggle').checked=!!data.demo_on;
-}
-async function toggleDemo(on){
-  const {error}=await supa.from('app_settings').update({demo_on:on}).eq('id',1);
-  if(error)alert('예시 데이터 설정을 저장하지 못했어요: '+error.message);
-}
-
 /* ===== 비밀번호 게이트 — 한 번 맞으면 이 페이지 세션 동안 계속 잠금 해제 ===== */
 let unlocked=false, pendingAction=null;
 function requireAuth(action){
@@ -296,7 +278,6 @@ function confirmPwd(){
 document.getElementById('pwd-input').addEventListener('keydown',e=>{if(e.key==='Enter')confirmPwd();});
 
 loadAll();
-loadDemoToggle();
 </script>
 </body>
 </html>
