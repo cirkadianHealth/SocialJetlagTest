@@ -444,7 +444,7 @@ function animate(){
   const t=performance.now();
   if(flashKey&&t>flashUntil){flashKey=null;rotationLocked=false;}
   if(targetY!==null){let d=targetY-globe.rotation.y;d=Math.atan2(Math.sin(d),Math.cos(d));globe.rotation.y+=d*0.06;if(Math.abs(d)<0.01)targetY=null;}
-  else if(!rotationLocked){globe.rotation.y+=0.0015;}
+  else if(!rotationLocked){globe.rotation.y+=0.0026;}
   for(const k in pinsByKey){const p=pinsByKey[k];const r=p.base+Math.sin(t/500+p.dir.x)*1.5;p.ico.position.copy(p.dir.clone().multiplyScalar(r));}
   for(const key in arcs){
     const arc=arcs[key];
