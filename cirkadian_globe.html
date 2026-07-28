@@ -19,7 +19,7 @@ canvas{display:block}
 .mast .word{font-family:var(--pixel);font-size:30px;letter-spacing:5px;color:var(--ink)}
 .mast .word .k{color:var(--orange-d)}
 .mast .sub{display:inline-block;color:var(--ink);font-weight:900;font-size:40px;letter-spacing:.5px;line-height:1.2}
-.mast .en{display:block;margin-top:12px;font-family:var(--pixel);font-size:15px;color:var(--orange-d);letter-spacing:2px}
+.mast .en{display:block;margin-top:12px;font-family:var(--pixel);font-size:15px;color:var(--orange);letter-spacing:2px}
 
 .panel{background:#fff;border:3px solid var(--ink);box-shadow:5px 5px 0 var(--ink)}
 .bar{background:var(--ink);color:#fff;font-weight:900;font-size:13px;padding:8px 14px;letter-spacing:1px}
@@ -48,7 +48,7 @@ canvas{display:block}
 .prow.p1 .phr{font-size:17px;margin-top:7px;color:var(--ink)}
 
 .total{position:fixed;bottom:66px;left:34px;z-index:5;background:#fff;border:3px solid var(--ink);box-shadow:4px 4px 0 var(--ink);padding:12px 18px;font-weight:900;font-size:14px}
-.total b{font-family:var(--pixel);color:var(--orange-d);font-size:20px;margin:0 4px}
+.total b{font-family:var(--pixel);color:var(--orange);font-size:20px;margin:0 4px}
 
 .footer{position:fixed;bottom:0;left:0;right:0;z-index:5;background:var(--ink);color:#fff;display:flex;justify-content:space-between;align-items:center;padding:11px 34px}
 .footer .l{font-family:var(--pixel);font-size:14px;letter-spacing:2px}
@@ -271,7 +271,7 @@ function init(){
     new THREE.MeshBasicMaterial({map:globeTex})));
 
   // 대륙 픽셀 점 (육지=진한 오렌지)
-  const cLand=new THREE.Color(0xFFA54B);
+  const cLand=new THREE.Color(0xFE933F);
   const landPts=[],landCols=[];
   for(let lat=-84;lat<=84;lat+=2.2){for(let lon=-180;lon<180;lon+=2.2){
     if(isLand(lon,lat)){const v=ll2v(lat,lon,R);landPts.push(v.x,v.y,v.z);landCols.push(cLand.r,cLand.g,cLand.b);}
