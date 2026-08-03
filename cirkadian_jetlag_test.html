@@ -497,12 +497,15 @@ function run(){
       : `시차는 하루에 약 1시간씩 회복돼요. 월요일에 어긋난 리듬이 <b>${DAYS[adapt]}요일</b>쯤 겨우 맞는데, 금요일 밤이면 또 풀리죠. 몸이 제대로 맞는 날은 일주일에 <b>${aligned}일</b>뿐이에요.`);
 
   /* 스토리 이미지용 데이터 */
+  const nightOwlIdx={종달새형:15,중간형:45,올빼미형:75,극야행성:95}[chrono]||45;
   STORY={
     icon:c.icon, flag:c.flag, head:c.head, title:c.title, lm:c.lm,
     jet:fmtH(jet), jetRaw:jet,
-    world:short(ww), body:short(bodyH),
-    week:wk, aligned:(adapt===0?7:aligned),
-    yr:yrH, yrD:yrD
+    tags:tags.slice(0,3), caption:(c.trav.split('. ')[0]+'.'),
+    jetPct:clamp(Math.round(jet/8*100),5,100),
+    owlPct:nightOwlIdx,
+    burnoutPct:clamp(100-score,3,100),
+    scoreLab:sLab, score
   };
 
   /* 하루 컨디션 곡선 */
@@ -639,6 +642,19 @@ function fitText(x,text,maxW,startPx,weight){
   while(x.measureText(text).width>maxW && px>26);
   return px+3;
 }
+// 현재 x.font 그대로, 단어 단위로 줄바꿈해서 최대 maxLines줄까지 중앙정렬로 그림
+function wrapCenter(x,text,cx,y,maxW,lineH,maxLines){
+  const words=text.split(' ');
+  const lines=[]; let cur='';
+  for(const w of words){
+    const t=cur?cur+' '+w:w;
+    if(x.measureText(t).width>maxW && cur){ lines.push(cur); cur=w; }
+    else cur=t;
+  }
+  if(cur)lines.push(cur);
+  const shown=lines.slice(0,maxLines);
+  shown.forEach((line,i)=>x.fillText(line,cx,y+i*lineH));
+}
 let _logoImg;
 function loadLogoImg(){
   if(_logoImg) return Promise.resolve(_logoImg);
@@ -699,14 +715,14 @@ async function makeStoryInner(){
   x.strokeStyle='#17130D'; x.lineWidth=5;
   x.beginPath(); x.moveTo(150,250); x.lineTo(W-150,250); x.stroke();
 
-  // 히어로
-  x.font='200px "Noto Color Emoji","Apple Color Emoji","Segoe UI Emoji",sans-serif';
+  // 히어로 — 타입 리빌
+  x.font='210px "Noto Color Emoji","Apple Color Emoji","Segoe UI Emoji",sans-serif';
   x.fillText(STORY.icon||'🗼',W/2,470);
-  x.fillStyle='#8A7B5E'; x.font='700 30px "Noto Sans KR", sans-serif';
-  x.fillText(STORY.head||'',W/2,540);
-  const tPx=fitText(x,STORY.title||'',W-180,74,'900');
+  x.fillStyle='#8A7B5E'; x.font='700 28px "Noto Sans KR", sans-serif';
+  x.fillText(STORY.head||'',W/2,520);
+  const tPx=fitText(x,STORY.title||'',W-140,84,'900');
   x.fillStyle='#17130D'; x.font=`900 ${tPx}px "Noto Sans KR", sans-serif`;
-  x.fillText(STORY.title||'',W/2,620);
+  x.fillText(STORY.title||'',W/2,608);
   x.fillStyle='#B85C0E'; x.font='700 28px "Noto Sans KR", sans-serif';
   {
     const flagTxt=STORY.flag||'', lmTxt=STORY.lm||'', gapPx=14;
@@ -718,64 +734,61 @@ async function makeStoryInner(){
     x.textAlign='center';
   }
 
-  // 시차 박스
-  const jy=710;
-  x.fillStyle='#17130D'; x.fillRect(110,jy,W-220,190);
-  x.fillStyle='#FFE6B3'; x.font='700 28px "Noto Sans KR", sans-serif';
-  x.fillText('나의 사회적 시차',W/2,jy+62);
-  x.fillStyle='#FFA54B'; x.font='58px "Press Start 2P", monospace';
-  x.fillText(STORY.jet||'0시간',W/2,jy+142);
-
-  // 두 개의 시계
-  const cy=950, ch=270;
-  x.fillStyle='#fff'; x.fillRect(110,cy,W-220,ch);
-  x.strokeStyle='#17130D'; x.lineWidth=6; x.strokeRect(110,cy,W-220,ch);
-  x.fillStyle='#17130D'; x.fillRect(110,cy,W-220,58);
-  x.fillStyle='#fff'; x.font='900 28px "Noto Sans KR", sans-serif';
-  x.fillText('월요일 아침, 두 개의 시계',W/2,cy+39);
-
-  const lx=110+(W-220)*0.27, rx=110+(W-220)*0.73;
-  x.fillStyle='#8A7B5E'; x.font='700 24px "Noto Sans KR", sans-serif';
-  x.fillText('세상의 시계',lx,cy+112);
-  x.fillText('당신 몸의 시계',rx,cy+112);
-  x.fillStyle='#17130D'; x.font='46px "Press Start 2P", monospace';
-  x.fillText(STORY.world||'--:--',lx,cy+188);
-  x.fillStyle='#D6462F';
-  x.fillText(STORY.body||'--:--',rx,cy+188);
-  x.fillStyle='#B85C0E'; x.font='34px "Press Start 2P", monospace';
-  x.fillText('>',W/2,cy+178);
-  x.fillStyle='#8A7B5E'; x.font='700 24px "Noto Sans KR", sans-serif';
-  x.fillText('알람이 울리는 시각',lx,cy+232);
-  x.fillText('몸이 느끼는 시각',rx,cy+232);
-
-  // 주간 스트립
-  const wy=1290;
-  x.fillStyle='#17130D'; x.font='900 30px "Noto Sans KR", sans-serif';
-  x.fillText('한 주 동안 벌어지는 일',W/2,wy);
-  const DAYS=['월','화','수','목','금','토','일'];
-  const COL={miss:'#D6462F',warm:'#FFA54B',ok:'#FFF3D6',off:'#EDE4CE'};
-  const cellW=112, gap=12, totalW=cellW*7+gap*6, sx=(W-totalW)/2, by=wy+58, bh=104;
-  (STORY.week||[]).forEach((w,i)=>{
-    const bx=sx+i*(cellW+gap);
-    x.fillStyle='#8A7B5E'; x.font='700 24px "Noto Sans KR", sans-serif';
-    x.fillText(DAYS[i],bx+cellW/2,by-8);
-    x.fillStyle=COL[w.cls]||'#EDE4CE'; x.fillRect(bx,by,cellW,bh);
-    x.strokeStyle='#17130D'; x.lineWidth=5; x.strokeRect(bx,by,cellW,bh);
-    x.fillStyle=(w.cls==='miss')?'#fff':'#17130D';
-    x.font='900 34px "Noto Sans KR", sans-serif';
-    x.fillText(w.mk||'',bx+cellW/2,by+bh/2+13);
-  });
-  x.fillStyle='#17130D'; x.font='900 30px "Noto Sans KR", sans-serif';
-  const alignTxt = (STORY.aligned>=7)
-    ? '일주일 내내 몸이 제 시간에 맞아요'
-    : `몸이 제대로 맞는 날, 일주일에 ${STORY.aligned}일`;
-  x.fillText(alignTxt,W/2,by+bh+58);
-
-  // 1년 누적
-  if(STORY.jetRaw>=0.5){
-    x.fillStyle='#8A7B5E'; x.font='700 26px "Noto Sans KR", sans-serif';
-    x.fillText(`1년이면 ${STORY.yr}시간 — 시차 적응에만 ${STORY.yrD}일`,W/2,by+bh+108);
+  // 해시태그 알약
+  {
+    const chips=STORY.tags||[];
+    x.font='700 24px "Noto Sans KR", sans-serif';
+    const padX=22,gap=14;
+    const widths=chips.map(t=>x.measureText(t).width+padX*2);
+    const total=widths.reduce((a,b)=>a+b,0)+gap*(chips.length-1);
+    let cx=W/2-total/2; const cy0=714, ch0=48;
+    chips.forEach((t,i)=>{
+      const w=widths[i];
+      x.fillStyle='#17130D';
+      x.beginPath(); x.roundRect ? x.roundRect(cx,cy0,w,ch0,ch0/2) : x.rect(cx,cy0,w,ch0); x.fill();
+      x.fillStyle='#FFE6B3';
+      x.textAlign='left'; x.fillText(t,cx+padX,cy0+ch0/2+8);
+      x.textAlign='center';
+      cx+=w+gap;
+    });
   }
+
+  // 한 줄 캡션
+  x.fillStyle='#17130D'; x.font='700 32px "Noto Sans KR", sans-serif';
+  wrapCenter(x,STORY.caption||'',W/2,812,W-160,42,2);
+
+  // 스탯 바 3종 — 밈 카드처럼 즉물적인 퍼센트로
+  const stats=[
+    {label:'시차 위험도', pct:STORY.jetPct, color:'#FE933F'},
+    {label:'저녁형 지수', pct:STORY.owlPct, color:'#8449B8'},
+    {label:'번아웃 위험도', pct:STORY.burnoutPct, color:'#D6462F'}
+  ];
+  const barX=110, barW=W-220, barH=30, rowH=140; let by=912;
+  stats.forEach(s=>{
+    x.textAlign='left';
+    x.fillStyle='#17130D'; x.font='900 32px "Noto Sans KR", sans-serif';
+    x.fillText(s.label,barX,by);
+    x.textAlign='right';
+    x.fillStyle=s.color; x.font='32px "Press Start 2P", monospace';
+    x.fillText(s.pct+'%',barX+barW,by);
+    x.textAlign='center';
+    const ty=by+26;
+    x.fillStyle='#FFE6C4'; x.fillRect(barX,ty,barW,barH);
+    x.fillStyle=s.color; x.fillRect(barX,ty,barW*(s.pct/100),barH);
+    x.strokeStyle='#17130D'; x.lineWidth=4; x.strokeRect(barX,ty,barW,barH);
+    by+=rowH;
+  });
+
+  // 팁 박스
+  const tipY=by+8, tipH=132;
+  x.fillStyle='#17130D'; x.fillRect(110,tipY,W-220,tipH);
+  x.fillStyle='#FFE6B3'; x.font='900 28px "Noto Sans KR", sans-serif';
+  x.fillText('시차 회복 팁',W/2,tipY+50);
+  x.fillStyle='#fff'; x.font='700 26px "Noto Sans KR", sans-serif';
+  const tip = STORY.jetRaw>=2 ? '주말 기상시간을 평일보다 2시간 이상 늦추지 않기'
+            : STORY.jetRaw>=0.5 ? '지금처럼 큰 격차 없이, 취침시간만 조금 더 당겨보기'
+            : '지금 리듬 그대로 유지하기 — 이미 잘 맞고 있어요';
+  wrapCenter(x,tip,W/2,tipY+94,W-260,32,1);
 
   // 푸터 — QR + 텍스트 2단 레이아웃 (스캔하거나 주소 보고 바로 들어올 수 있게)
   x.strokeStyle='#17130D'; x.lineWidth=5;
