@@ -4,7 +4,18 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>생체시계 시차 테스트 · CIRKADIAN</title>
+<meta name="description" content="평일과 주말의 수면 시차로 알아보는 나의 사회적 시차. 무료 30초 테스트, 지금 바로 확인해보세요.">
+<meta property="og:type" content="website">
+<meta property="og:title" content="당신의 몸은 지금 어느 도시에 있나요?">
+<meta property="og:description" content="평일과 주말의 수면 시차로 알아보는 나의 사회적 시차. 무료 30초 테스트.">
+<meta property="og:image" content="https://social-jetlag-test.vercel.app/og-image.png">
+<meta property="og:url" content="https://social-jetlag-test.vercel.app/">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="당신의 몸은 지금 어느 도시에 있나요?">
+<meta name="twitter:description" content="평일과 주말의 수면 시차로 알아보는 나의 사회적 시차. 무료 30초 테스트.">
+<meta name="twitter:image" content="https://social-jetlag-test.vercel.app/og-image.png">
 <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&family=Noto+Sans+KR:wght@400;500;700;900&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <style>
 :root{--ink:#17130D;--orange:#FFA54B;--orange-d:#B85C0E;--pale:#FFF3D6;--pale2:#FFBC69;--muted:#8A7B5E;--red:#D6462F;--pixel:'Press Start 2P',monospace;--kr:'Noto Sans KR',sans-serif}
@@ -295,6 +306,7 @@ svg.day{width:100%;height:auto;display:block}
   <button class="sclose" onclick="document.getElementById('spop').classList.remove('show')">닫기</button>
 </div>
 <canvas id="storyCanvas" width="1080" height="1920" style="display:none"></canvas>
+<div id="story-qr" style="display:none"></div>
 
 <div class="tpop-bg" id="tpop-bg" onclick="if(event.target===this)closeTimePopup(false)">
   <div class="tpop">
@@ -372,6 +384,13 @@ const QS=[
 ];
 const ans={};
 let STORY={};
+
+/* 스토리 이미지 하단에 박아넣을 QR — 모두에게 같은 주소라 페이지 로드 시 한 번만 생성해 재사용 */
+let qrCanvasEl=null;
+try{
+  new QRCode(document.getElementById('story-qr'),{text:location.origin+'/',width:280,height:280,colorDark:'#17130D',colorLight:'#FFFFFF',correctLevel:QRCode.CorrectLevel.M});
+  qrCanvasEl=document.querySelector('#story-qr canvas');
+}catch(_){}
 
 /* 닉네임 비워두면 식물 이름으로 랜덤 생성 */
 const PLANT_ADJ=['행복한','졸린','튼튼한','수줍은','용감한','촉촉한','푸른','향긋한','느긋한','대담한','상큼한','포근한','반짝이는','씩씩한'];
@@ -758,13 +777,27 @@ async function makeStoryInner(){
     x.fillText(`1년이면 ${STORY.yr}시간 — 시차 적응에만 ${STORY.yrD}일`,W/2,by+bh+108);
   }
 
-  // 푸터
+  // 푸터 — QR + 텍스트 2단 레이아웃 (스캔하거나 주소 보고 바로 들어올 수 있게)
   x.strokeStyle='#17130D'; x.lineWidth=5;
   x.beginPath(); x.moveTo(150,1706); x.lineTo(W-150,1706); x.stroke();
-  x.fillStyle='#17130D'; x.font='900 36px "Noto Sans KR", sans-serif';
-  x.fillText('내 몸은 지금 어느 도시에 있을까?',W/2,1772);
-  x.fillStyle='#B85C0E'; x.font='26px "Press Start 2P", monospace';
-  x.fillText('@CIRKADIANOFFICIAL',W/2,1832);
+
+  const qrSize=132, qrX=150, qrY=1742;
+  x.fillStyle='#fff'; x.fillRect(qrX,qrY,qrSize,qrSize);
+  if(qrCanvasEl) x.drawImage(qrCanvasEl,qrX,qrY,qrSize,qrSize);
+  x.strokeStyle='#17130D'; x.lineWidth=4; x.strokeRect(qrX,qrY,qrSize,qrSize);
+
+  const tx=qrX+qrSize+30;
+  x.textAlign='left';
+  x.fillStyle='#17130D'; x.font='900 30px "Noto Sans KR", sans-serif';
+  x.fillText('나도 내 시차 확인하기',tx,qrY+40);
+  x.fillStyle='#8A7B5E'; x.font='700 22px "Noto Sans KR", sans-serif';
+  x.fillText('QR 스캔하거나 주소창에 입력',tx,qrY+72);
+  x.fillStyle='#B85C0E'; x.font='700 24px "Noto Sans KR", sans-serif';
+  x.fillText(location.host,tx,qrY+108);
+  x.textAlign='center';
+
+  x.fillStyle='#B85C0E'; x.font='18px "Press Start 2P", monospace';
+  x.fillText('@CIRKADIANOFFICIAL',W/2,1908);
 
   // blob: URL은 일부 안드로이드 브라우저(삼성인터넷 등)에서 길게 눌러 저장이 안 먹혀서
   // data: URL로 통일 — <a download>와 롱프레스 저장 둘 다 이게 훨씬 안정적으로 동작함
