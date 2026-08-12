@@ -501,7 +501,7 @@ function run(){
   STORY={
     icon:c.icon, flag:c.flag, head:c.head, title:c.title, lm:c.lm,
     jet:fmtH(jet), jetRaw:jet,
-    tags:tags.slice(0,3), caption:(c.trav.split('. ')[0]+'.'),
+    tags:tags.slice(0,3), caption:(c.trav.replace(/<[^>]+>/g,'').split('. ')[0]+'.'),
     jetPct:clamp(Math.round(jet/8*100),5,100),
     owlPct:nightOwlIdx,
     burnoutPct:clamp(100-score,3,100),
