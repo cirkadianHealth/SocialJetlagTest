@@ -794,23 +794,23 @@ async function makeStoryInner(){
   x.strokeStyle='#17130D'; x.lineWidth=5;
   x.beginPath(); x.moveTo(150,1706); x.lineTo(W-150,1706); x.stroke();
 
-  const qrSize=132, qrX=150, qrY=1742;
+  const qrSize=118, qrX=150, qrY=1726;
   x.fillStyle='#fff'; x.fillRect(qrX,qrY,qrSize,qrSize);
   if(qrCanvasEl) x.drawImage(qrCanvasEl,qrX,qrY,qrSize,qrSize);
   x.strokeStyle='#17130D'; x.lineWidth=4; x.strokeRect(qrX,qrY,qrSize,qrSize);
 
   const tx=qrX+qrSize+30;
   x.textAlign='left';
-  x.fillStyle='#17130D'; x.font='900 30px "Noto Sans KR", sans-serif';
-  x.fillText('나도 내 시차 확인하기',tx,qrY+40);
-  x.fillStyle='#8A7B5E'; x.font='700 22px "Noto Sans KR", sans-serif';
-  x.fillText('QR 스캔하거나 주소창에 입력',tx,qrY+72);
-  x.fillStyle='#B85C0E'; x.font='700 24px "Noto Sans KR", sans-serif';
-  x.fillText(location.host,tx,qrY+108);
+  x.fillStyle='#17130D'; x.font='900 28px "Noto Sans KR", sans-serif';
+  x.fillText('나도 내 시차 확인하기',tx,qrY+34);
+  x.fillStyle='#8A7B5E'; x.font='700 20px "Noto Sans KR", sans-serif';
+  x.fillText('QR 스캔하거나 주소창에 입력',tx,qrY+64);
+  x.fillStyle='#B85C0E'; x.font='700 22px "Noto Sans KR", sans-serif';
+  x.fillText(location.host,tx,qrY+96);
   x.textAlign='center';
 
-  x.fillStyle='#B85C0E'; x.font='18px "Press Start 2P", monospace';
-  x.fillText('@CIRKADIANOFFICIAL',W/2,1908);
+  x.fillStyle='#B85C0E'; x.font='16px "Press Start 2P", monospace';
+  x.fillText('@CIRKADIANOFFICIAL',W/2,1862);
 
   // blob: URL은 일부 안드로이드 브라우저(삼성인터넷 등)에서 길게 눌러 저장이 안 먹혀서
   // data: URL로 통일 — <a download>와 롱프레스 저장 둘 다 이게 훨씬 안정적으로 동작함
