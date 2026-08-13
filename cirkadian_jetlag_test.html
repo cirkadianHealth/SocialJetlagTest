@@ -15,6 +15,7 @@
 <meta name="twitter:description" content="평일과 주말의 수면 시차로 알아보는 나의 사회적 시차. 무료 30초 테스트.">
 <meta name="twitter:image" content="https://social-jetlag-test.vercel.app/og-image.png">
 <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&family=Noto+Sans+KR:wght@400;500;700;900&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <style>
 :root{--ink:#17130D;--orange:#FFA54B;--orange-d:#B85C0E;--pale:#FFF3D6;--pale2:#FFBC69;--muted:#8A7B5E;--red:#D6462F;--pixel:'Press Start 2P',monospace;--kr:'Noto Sans KR',sans-serif}
@@ -305,6 +306,7 @@ svg.day{width:100%;height:auto;display:block}
   <button class="sclose" onclick="document.getElementById('spop').classList.remove('show')">닫기</button>
 </div>
 <canvas id="storyCanvas" width="1080" height="1920" style="display:none"></canvas>
+<div id="story-qr" style="display:none"></div>
 
 <div class="tpop-bg" id="tpop-bg" onclick="if(event.target===this)closeTimePopup(false)">
   <div class="tpop">
@@ -382,6 +384,43 @@ const QS=[
 ];
 const ans={};
 let STORY={};
+
+/* 스토리 이미지 하단 QR — 모두에게 같은 주소라 페이지 로드 시 한 번만 생성해 재사용 */
+let qrCanvasEl=null;
+try{
+  new QRCode(document.getElementById('story-qr'),{text:location.origin+'/',width:280,height:280,colorDark:'#17130D',colorLight:'#FFFFFF',correctLevel:QRCode.CorrectLevel.M});
+  qrCanvasEl=document.querySelector('#story-qr canvas');
+}catch(_){}
+
+/* 스토리 이미지 배경의 세계지도 점무늬용 — 단순화한 대륙 윤곽 (지구본 페이지와 동일 데이터) */
+const LAND=[
+ [[-168,65],[-155,71],[-130,70],[-100,72],[-82,73],[-64,60],[-56,52],[-52,47],[-66,44],[-70,42],[-75,35],[-81,25],[-90,19],[-97,16],[-105,20],[-114,28],[-124,40],[-130,48],[-140,59],[-160,60],[-168,65]],
+ [[-45,60],[-30,68],[-18,72],[-20,82],[-40,83],[-56,78],[-52,68],[-46,62],[-45,60]],
+ [[-80,9],[-60,11],[-52,5],[-48,-2],[-35,-6],[-38,-14],[-48,-25],[-58,-35],[-66,-45],[-74,-52],[-71,-40],[-70,-25],[-76,-12],[-81,-3],[-80,9]],
+ [[-17,15],[-8,28],[0,36],[11,37],[23,33],[33,31],[43,12],[51,11],[45,2],[40,-4],[40,-16],[33,-27],[20,-35],[15,-30],[12,-16],[9,-2],[3,4],[-8,7],[-17,15]],
+ [[-10,44],[-9,36],[0,38],[10,38],[19,40],[28,41],[30,45],[40,48],[38,55],[30,60],[24,66],[15,63],[8,58],[-2,52],[-8,50],[-10,44]],
+ [[30,60],[38,55],[40,48],[45,42],[48,40],[56,27],[60,25],[68,24],[75,8],[80,8],[88,22],[93,22],[98,10],[106,10],[110,18],[118,22],[122,30],[128,42],[135,50],[142,54],[160,62],[178,68],[160,73],[120,76],[90,78],[60,70],[45,68],[36,66],[30,60]],
+ [[95,6],[105,1],[118,5],[128,6],[140,-3],[132,-8],[120,-9],[108,-7],[100,2],[95,6]],
+ [[113,-22],[122,-18],[130,-11],[142,-11],[146,-18],[153,-27],[150,-38],[140,-38],[129,-32],[115,-35],[113,-22]],
+ [[166,-46],[172,-41],[178,-38],[174,-34],[168,-44],[166,-46]],
+ [[129,31],[135,34],[141,37],[146,44],[141,42],[133,34],[129,31]],
+ [[125,34],[126,38],[128,41],[130,42],[130,38],[129,35],[127,34],[125,34]],
+ [[68,8],[77,8],[80,13],[88,22],[92,22],[80,30],[74,32],[70,24],[68,8]],
+ [[7,44],[12,46],[15,42],[18,40],[16,38],[13,42],[8,44],[7,44]],
+ [[35,12],[43,12],[56,25],[52,29],[42,29],[36,20],[35,12]],
+ [[-25,-58],[-55,-63],[-100,-72],[-150,-75],[-180,-78],[180,-78],[100,-66],[40,-68],[-20,-70],[-25,-58]]
+];
+function isLand(lon,lat){
+  for(const poly of LAND){
+    let inside=false;
+    for(let i=0,j=poly.length-1;i<poly.length;j=i++){
+      const xi=poly[i][0],yi=poly[i][1],xj=poly[j][0],yj=poly[j][1];
+      if(((yi>lat)!==(yj>lat)) && (lon < (xj-xi)*(lat-yi)/(yj-yi)+xi)) inside=!inside;
+    }
+    if(inside) return true;
+  }
+  return false;
+}
 
 /* 닉네임 비워두면 식물 이름으로 랜덤 생성 */
 const PLANT_ADJ=['행복한','졸린','튼튼한','수줍은','용감한','촉촉한','푸른','향긋한','느긋한','대담한','상큼한','포근한','반짝이는','씩씩한'];
@@ -684,140 +723,141 @@ async function makeStoryInner(){
     await document.fonts.ready;
   }catch(_){}
 
-  // 배경 + 격자
-  x.fillStyle='#FFF5DE'; x.fillRect(0,0,W,H);
-  x.strokeStyle='#FFE6B3'; x.lineWidth=2;
-  for(let i=0;i<W;i+=40){x.beginPath();x.moveTo(i,0);x.lineTo(i,H);x.stroke();}
-  for(let i=0;i<H;i+=40){x.beginPath();x.moveTo(0,i);x.lineTo(W,i);x.stroke();}
-  // 프레임
-  x.strokeStyle='#17130D'; x.lineWidth=12; x.strokeRect(38,38,W-76,H-76);
+  // 어두운 배경 위에 떠 있는 두 장의 흰 카드 — 실제 탑승권 사진 레퍼런스 참고
+  x.fillStyle='#181410'; x.fillRect(0,0,W,H);
   x.textAlign='center'; x.textBaseline='alphabetic';
 
-  // 퍼포레이션(절취선) + 양쪽 노치 — 실제 티켓 반쪽 잘려나간 느낌
-  function perforation(py){
-    x.save();
-    x.strokeStyle='#B0A488'; x.lineWidth=3; x.setLineDash([12,10]);
-    x.beginPath(); x.moveTo(70,py); x.lineTo(W-70,py); x.stroke();
-    x.restore();
-    x.fillStyle='#FFF5DE';
-    x.beginPath(); x.arc(38,py,20,0,Math.PI*2); x.fill();
-    x.beginPath(); x.arc(W-38,py,20,0,Math.PI*2); x.fill();
+  function rr(px,py,pw,ph,r){
+    x.beginPath();
+    x.moveTo(px+r,py); x.lineTo(px+pw-r,py); x.arcTo(px+pw,py,px+pw,py+r,r);
+    x.lineTo(px+pw,py+ph-r); x.arcTo(px+pw,py+ph,px+pw-r,py+ph,r);
+    x.lineTo(px+r,py+ph); x.arcTo(px,py+ph,px,py+ph-r,r);
+    x.lineTo(px,py+r); x.arcTo(px,py,px+r,py,r);
+    x.closePath();
   }
+  function rrTop(px,py,pw,ph,r){
+    x.beginPath();
+    x.moveTo(px,py+r); x.arcTo(px,py,px+r,py,r);
+    x.lineTo(px+pw-r,py); x.arcTo(px+pw,py,px+pw,py+r,r);
+    x.lineTo(px+pw,py+ph); x.lineTo(px,py+ph); x.closePath();
+  }
+  function cardShadow(px,py,pw,ph,r){
+    x.save(); x.shadowColor='rgba(0,0,0,.45)'; x.shadowBlur=54; x.shadowOffsetY=24;
+    rr(px,py,pw,ph,r); x.fillStyle='#fff'; x.fill(); x.restore();
+  }
+  const todayStr=(d=>`${d.getMonth()+1}월 ${d.getDate()}일`)(new Date());
 
-  // 헤더 — 항공사 로고 + BOARDING PASS
+  // ===== 카드1: 메인 탑승권 =====
+  const c1x=60,c1y=270,c1w=960,c1h=700,rad=44;
+  cardShadow(c1x,c1y,c1w,c1h,rad);
+  rr(c1x,c1y,c1w,c1h,rad); x.save(); x.clip();
+
+  x.textAlign='left';
   const logo=await loadLogoImg();
-  x.textAlign='left';
   if(logo){
-    const logoH=34, logoW=logoH*(logo.naturalWidth/logo.naturalHeight);
-    x.drawImage(logo,110,80,logoW,logoH);
+    const logoH=32, logoW=logoH*(logo.naturalWidth/logo.naturalHeight);
+    x.drawImage(logo,c1x+50,c1y+50,logoW,logoH);
   }else{
-    x.fillStyle='#17130D'; x.font='20px "Press Start 2P", monospace';
-    x.fillText('CIRKADIAN',110,106);
+    x.fillStyle='#17130D'; x.font='18px "Press Start 2P", monospace';
+    x.fillText('CIRKADIAN',c1x+50,c1y+76);
   }
-  x.textAlign='right';
-  x.fillStyle='#8A7B5E'; x.font='16px "Press Start 2P", monospace';
-  x.fillText('BOARDING PASS',W-110,106);
-  x.textAlign='center';
-  x.strokeStyle='#17130D'; x.lineWidth=5;
-  x.beginPath(); x.moveTo(110,140); x.lineTo(W-110,140); x.stroke();
 
-  // 노선 — SEL(서울) → 배정된 도시, 사이에 점선 항로 + 비행기
-  x.textAlign='left';
-  x.fillStyle='#17130D'; x.font='68px "Press Start 2P", monospace';
-  x.fillText('SEL',150,270);
-  x.fillStyle='#8A7B5E'; x.font='700 24px "Noto Sans KR", sans-serif';
-  x.fillText('서울',150,312);
+  // 세계지도 점무늬 워터마크
+  {
+    const mx0=c1x+40,mx1=c1x+c1w-40,my0=c1y+110,my1=c1y+540;
+    x.fillStyle='#ECE5D6';
+    for(let lat=-80;lat<=80;lat+=5.2){
+      for(let lon=-180;lon<180;lon+=5.2){
+        if(isLand(lon,lat)){
+          const px=mx0+(lon+180)/360*(mx1-mx0), py=my0+(90-lat)/180*(my1-my0);
+          x.beginPath(); x.arc(px,py,2.1,0,Math.PI*2); x.fill();
+        }
+      }
+    }
+  }
 
-  x.textAlign='right';
-  x.fillStyle='#F77F27'; x.font='68px "Press Start 2P", monospace';
-  x.fillText(STORY.cityKey||'---',W-150,270);
-  x.fillStyle='#8A7B5E'; x.font='700 24px "Noto Sans KR", sans-serif';
-  x.fillText(STORY.city||'',W-150,312);
-  x.textAlign='center';
+  // 노선 — 서울 ✈ 배정된 도시
+  {
+    const routeTxt=`서울 ✈ ${STORY.city||''}`;
+    const rPx=fitText(x,routeTxt,c1w-100,72,'900');
+    x.fillStyle='#17130D'; x.font=`900 ${rPx}px "Noto Sans KR", sans-serif`;
+    x.fillText(routeTxt,c1x+50,c1y+340);
+  }
 
-  x.save();
-  x.strokeStyle='#B85C0E'; x.lineWidth=3; x.setLineDash([12,10]);
-  x.beginPath(); x.moveTo(350,244); x.lineTo(760,244); x.stroke();
-  x.restore();
-  x.font='40px "Noto Color Emoji","Apple Color Emoji","Segoe UI Emoji",sans-serif';
-  x.fillText('✈️',555,256);
-
-  perforation(360);
-
-  // 탑승권 정보 그리드
-  x.textAlign='left';
-  const gx1=150, gx2=580;
-  x.fillStyle='#8A7B5E'; x.font='700 20px "Noto Sans KR", sans-serif';
-  x.fillText('탑승객',gx1,420); x.fillText('사회적 시차',gx2,420);
-  x.fillStyle='#17130D'; x.font='900 34px "Noto Sans KR", sans-serif';
-  x.fillText(STORY.nickname||'익명',gx1,464); x.fillText(STORY.jet||'--',gx2,464);
-
-  x.fillStyle='#8A7B5E'; x.font='700 20px "Noto Sans KR", sans-serif';
-  x.fillText('크로노타입',gx1,536); x.fillText('컨디션',gx2,536);
-  x.fillStyle='#17130D'; x.font='900 34px "Noto Sans KR", sans-serif';
-  x.fillText(STORY.chrono||'--',gx1,580);
-  x.fillStyle=({최상:'#2E9E5B',양호:'#B85C0E',주의:'#D9871F',위험:'#D6462F'})[STORY.scoreLab]||'#17130D';
-  x.fillText(STORY.scoreLab||'--',gx2,580);
-  x.textAlign='center';
-
-  // 한 줄 캡션
-  x.fillStyle='#17130D'; x.font='700 30px "Noto Sans KR", sans-serif';
-  wrapCenter(x,STORY.caption||'',W/2,652,W-180,40,2);
-
-  // 스탯 바 3종
-  const stats=[
-    {label:'시차 위험도', pct:STORY.jetPct, color:'#FE933F'},
-    {label:'저녁형 지수', pct:STORY.owlPct, color:'#8449B8'},
-    {label:'번아웃 위험도', pct:STORY.burnoutPct, color:'#D6462F'}
-  ];
-  const barX=110, barW=W-220, barH=28, rowH=130; let by=762;
-  stats.forEach(s=>{
-    x.textAlign='left';
-    x.fillStyle='#17130D'; x.font='900 30px "Noto Sans KR", sans-serif';
-    x.fillText(s.label,barX,by);
-    x.textAlign='right';
-    x.fillStyle=s.color; x.font='30px "Press Start 2P", monospace';
-    x.fillText(s.pct+'%',barX+barW,by);
-    x.textAlign='center';
-    const ty=by+24;
-    x.fillStyle='#FFE6C4'; x.fillRect(barX,ty,barW,barH);
-    x.fillStyle=s.color; x.fillRect(barX,ty,barW*(s.pct/100),barH);
-    x.strokeStyle='#17130D'; x.lineWidth=4; x.strokeRect(barX,ty,barW,barH);
-    by+=rowH;
+  // 필드 3종 + 강조 알약(컨디션)
+  const fields=[{label:'날짜',value:todayStr},{label:'비행시간',value:STORY.jet||'--'},{label:'좌석등급',value:STORY.chrono||'--'}];
+  fields.forEach((f,i)=>{
+    const fx=c1x+50+i*228;
+    x.fillStyle='#9A9080'; x.font='700 18px "Noto Sans KR", sans-serif';
+    x.fillText(f.label,fx,c1y+430);
+    x.fillStyle='#17130D'; x.font='900 28px "Noto Sans KR", sans-serif';
+    x.fillText(f.value,fx,c1y+466);
   });
-
-  // 팁 박스
-  const tipY=by+6, tipH=118;
-  x.fillStyle='#17130D'; x.fillRect(110,tipY,W-220,tipH);
-  x.fillStyle='#FFE6B3'; x.font='900 26px "Noto Sans KR", sans-serif';
-  x.fillText('시차 회복 팁',W/2,tipY+44);
-  x.fillStyle='#fff'; x.font='700 24px "Noto Sans KR", sans-serif';
-  const tip = STORY.jetRaw>=2 ? '주말 기상시간을 평일보다 2시간 이상 늦추지 않기'
-            : STORY.jetRaw>=0.5 ? '지금처럼 큰 격차 없이, 취침시간만 조금 더 당겨보기'
-            : '지금 리듬 그대로 유지하기 — 이미 잘 맞고 있어요';
-  wrapCenter(x,tip,W/2,tipY+84,W-260,30,1);
-
-  perforation(tipY+tipH+40);
-
-  // 티켓 스텁 — 바코드 + 워터마크 (인스타는 QR보다 링크 스티커/핸들 검색이 표준)
-  const bcY=tipY+tipH+90, bcH=110, bcX0=150, bcX1=W-150;
-  x.fillStyle='#17130D';
-  let bx=bcX0, seed=(STORY.cityKey||'SEL').split('').reduce((a,c)=>a+c.charCodeAt(0),0);
-  while(bx<bcX1){
-    seed=(seed*9301+49297)%233280;
-    const w=2+(seed%5);
-    if(seed%3!==0) x.fillRect(bx,bcY,w,bcH);
-    bx+=w+3;
+  {
+    const pillLabel='컨디션', pillValue=STORY.scoreLab||'--';
+    x.font='900 26px "Noto Sans KR", sans-serif';
+    const vw=x.measureText(pillValue).width;
+    const pillW=Math.max(120,vw+56), pillH=76, px0=c1x+c1w-50-pillW, py0=c1y+398;
+    rr(px0,py0,pillW,pillH,14); x.fillStyle='#F77F27'; x.fill();
+    x.textAlign='center';
+    x.fillStyle='#fff'; x.font='700 16px "Noto Sans KR", sans-serif';
+    x.fillText(pillLabel,px0+pillW/2,py0+30);
+    x.font='900 26px "Noto Sans KR", sans-serif';
+    x.fillText(pillValue,px0+pillW/2,py0+60);
+    x.textAlign='left';
   }
-  x.fillStyle='#8A7B5E'; x.font='16px "Press Start 2P", monospace';
-  x.fillText(`SEL-${STORY.cityKey||'---'}`,W/2,bcY+bcH+38);
 
-  x.fillStyle='#17130D'; x.font='900 32px "Noto Sans KR", sans-serif';
-  x.fillText('나도 내 시차 확인하기',W/2,bcY+bcH+96);
-  x.fillStyle='#B85C0E'; x.font='700 24px "Noto Sans KR", sans-serif';
-  x.fillText(location.host,W/2,bcY+bcH+134);
-  x.fillStyle='#B85C0E'; x.font='16px "Press Start 2P", monospace';
-  x.fillText('@CIRKADIANOFFICIAL',W/2,bcY+bcH+176);
+  // 하단 — 탑승객명 + BOARDING PASS
+  x.fillStyle='#17130D'; x.font='900 30px "Noto Sans KR", sans-serif';
+  x.fillText(STORY.nickname||'익명',c1x+50,c1y+620);
+  x.fillStyle='#9A9080'; x.font='15px "Press Start 2P", monospace';
+  x.fillText('BOARDING PASS',c1x+50,c1y+652);
+  x.restore(); // clip
+
+  // ===== 카드2: 스텁(하단) =====
+  const c2x=60,c2y=1010,c2w=960,c2h=640;
+  cardShadow(c2x,c2y,c2w,c2h,rad);
+  rr(c2x,c2y,c2w,c2h,rad); x.save(); x.clip();
+
+  rrTop(c2x,c2y,c2w,104,rad); x.fillStyle='#F77F27'; x.fill();
+  x.fillStyle='#fff'; x.font='900 30px "Noto Sans KR", sans-serif';
+  x.fillText(STORY.nickname||'익명',c2x+50,c2y+52);
+  x.font='15px "Press Start 2P", monospace';
+  x.fillText('BOARDING PASS',c2x+50,c2y+84);
+
+  function fieldRow(icon,label,value,ry){
+    x.font='26px "Noto Color Emoji","Apple Color Emoji","Segoe UI Emoji",sans-serif';
+    x.fillStyle='#17130D'; x.fillText(icon,c2x+46,ry);
+    x.fillStyle='#9A9080'; x.font='700 20px "Noto Sans KR", sans-serif';
+    x.fillText(label,c2x+90,ry);
+    x.fillStyle='#17130D'; x.font='900 25px "Noto Sans KR", sans-serif';
+    x.fillText(value,c2x+160,ry);
+  }
+  fieldRow('🛫','출발','서울',c2y+160);
+  fieldRow('📍','도착',`${STORY.flag||''} ${STORY.city||''}`,c2y+210);
+
+  const gx1=c2x+46, gx2=c2x+c2w/2+20;
+  x.fillStyle='#9A9080'; x.font='700 16px "Noto Sans KR", sans-serif';
+  x.fillText('날짜',gx1,c2y+266); x.fillText('비행시간',gx2,c2y+266);
+  x.fillStyle='#17130D'; x.font='900 24px "Noto Sans KR", sans-serif';
+  x.fillText(todayStr,gx1,c2y+296); x.fillText(STORY.jet||'--',gx2,c2y+296);
+
+  x.fillStyle='#9A9080'; x.font='700 16px "Noto Sans KR", sans-serif';
+  x.fillText('좌석등급',gx1,c2y+352); x.fillText('컨디션',gx2,c2y+352);
+  x.fillStyle='#17130D'; x.font='900 24px "Noto Sans KR", sans-serif';
+  x.fillText(STORY.chrono||'--',gx1,c2y+382);
+  x.fillStyle=({최상:'#2E9E5B',양호:'#B85C0E',주의:'#D9871F',위험:'#D6462F'})[STORY.scoreLab]||'#17130D';
+  x.fillText(STORY.scoreLab||'--',gx2,c2y+382);
+
+  // QR + 한 줄 후킹 카피
+  const qrSize=110, qrX=c2x+46, qrY=c2y+450;
+  if(qrCanvasEl) x.drawImage(qrCanvasEl,qrX,qrY,qrSize,qrSize);
+  x.strokeStyle='#E5E0D5'; x.lineWidth=2; x.strokeRect(qrX,qrY,qrSize,qrSize);
+  x.fillStyle='#17130D'; x.font='700 22px "Noto Sans KR", sans-serif';
+  x.fillText(`몸은 아직 ${STORY.city||'그 도시'}에 있는데,`,qrX+qrSize+30,qrY+42);
+  x.fillText('알람은 서울 시간? 지금 확인해보세요',qrX+qrSize+30,qrY+72);
+  x.restore(); // clip
+  x.textAlign='center';
 
   // blob: URL은 일부 안드로이드 브라우저(삼성인터넷 등)에서 길게 눌러 저장이 안 먹혀서
   // data: URL로 통일 — <a download>와 롱프레스 저장 둘 다 이게 훨씬 안정적으로 동작함
