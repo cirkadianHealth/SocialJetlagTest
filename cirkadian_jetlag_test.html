@@ -87,6 +87,7 @@ button.tsel.active{background:var(--pale2)}
 .jetbox{background:var(--ink);color:#fff;text-align:center;padding:18px 16px;margin-bottom:16px;border:3px solid var(--ink);box-shadow:6px 6px 0 rgba(23,19,13,.22)}
 .jetbox .k{font-size:12px;font-weight:700;color:var(--pale2);letter-spacing:1px}
 .jetbox .v{font-family:var(--pixel);font-size:30px;color:var(--orange);margin:12px 0 10px}
+.jetbox .grade{display:inline-block;background:var(--orange);color:var(--ink);font-weight:900;font-size:14px;padding:7px 16px;border-radius:20px;margin-bottom:12px}
 .jetbox .yr{font-size:12.5px;font-weight:700;color:#E5D8B8;line-height:1.6;border-top:1px solid #4A4136;padding-top:11px}
 .jetbox .yr b{color:var(--orange);font-family:var(--pixel);font-size:13px}
 
@@ -223,6 +224,7 @@ svg.day{width:100%;height:auto;display:block}
     <div class="jetbox">
       <div class="k">당신의 사회적 시차</div>
       <div class="v" id="r-jet">2시간</div>
+      <div class="grade" id="r-grade"></div>
       <div class="yr" id="r-year"></div>
     </div>
 
@@ -364,6 +366,13 @@ function dec(s){const[h,m]=s.split(':').map(Number);return h+m/60;}
 function dur(bed,wake){let d=(wake-bed+24)%24;if(d===0)d=8;return d;}
 function midsleep(bed,wake){return (bed+dur(bed,wake)/2)%24;}
 function fmtH(h){const m=Math.round(h*60);const H=Math.floor(m/60),M=m%60;if(H>0&&M>0)return `${H}시간 ${M}분`;if(H>0)return `${H}시간`;return `${M}분`;}
+function jetGrade(h){
+  if(h<1)return'🥉 리듬 모범생';
+  if(h<2)return'😪 주말에 좀 풀림';
+  if(h<3)return'💀 몸 반쯤 나감';
+  if(h<5)return'🔥 리듬 파산 직전';
+  return'☠️ 명예의 전당 (망함)';
+}
 function hhmm(h){const m=Math.round(h*60);return Math.floor(m/60)+':'+String(m%60).padStart(2,'0');}
 function ampm(H){return H<6?'새벽':H<12?'오전':H<18?'오후':H<21?'저녁':'밤';}
 function clk(h){h=((h%24)+24)%24;const m=Math.round(h*60);let H=Math.floor(m/60),M=m%60;if(M===60){M=0;H=(H+1)%24;}const p=ampm(H);let h12=H%12;if(h12===0)h12=12;return `${p} ${h12}시`+(M?` ${M}분`:'');}
@@ -455,6 +464,7 @@ function run(){
 
   /* 시차 + 1년 누적 */
   document.getElementById('r-jet').textContent=fmtH(jet);
+  document.getElementById('r-grade').textContent=jetGrade(jet);
   const yrH=Math.round(jet*52), yrD=(yrH/24).toFixed(1);
   document.getElementById('r-year').innerHTML= jet<0.5
     ? `평일과 주말 리듬이 거의 같아요. <b>1년 내내</b> 시차 없이 사는 셈이에요.`
@@ -482,15 +492,15 @@ function run(){
     `<div class="wd ${w.cls}"><div class="dn">${w.d}</div><div class="bx">${w.mk}</div></div>`).join('');
   const aligned=Math.max(0,5-adapt);
   document.getElementById('w-note').innerHTML= adapt===0
-    ? `평일과 주말 리듬이 거의 같아서 <b>적응할 것 자체가 없어요.</b> 일주일 내내 몸이 제 시간에 맞습니다.`
+    ? `<b>일주일 내내 멀쩡함</b> — 평일과 주말 리듬이 거의 같아서 적응할 것 자체가 없어요.`
     : (aligned===0
-      ? `시차가 커서 <b>평일 내내 따라잡지 못한 채</b> 다시 주말을 맞아요. 몸이 제대로 맞는 날이 사실상 없는 셈이에요.`
-      : `시차는 하루에 약 1시간씩 회복돼요. 월요일에 어긋난 리듬이 <b>${DAYS[adapt]}요일</b>쯤 겨우 맞는데, 금요일 밤이면 또 풀리죠. 몸이 제대로 맞는 날은 일주일에 <b>${aligned}일</b>뿐이에요.`);
+      ? `<b>일주일 내내 단 하루도 안 멀쩡함</b> — 시차가 커서 평일 내내 따라잡지 못한 채 다시 주말을 맞아요.`
+      : `<b>일주일에 딱 ${aligned}일만 멀쩡함</b> — 시차는 하루에 약 1시간씩 회복되는데, 월요일에 어긋난 리듬이 ${DAYS[adapt]}요일쯤 겨우 맞았다가 금요일 밤이면 다시 풀려요.`);
 
   /* 스토리 이미지용 데이터 */
   STORY={
     icon:c.icon, flag:c.flag, head:c.head, title:c.title, lm:c.lm,
-    jet:fmtH(jet), jetRaw:jet,
+    jet:fmtH(jet), jetRaw:jet, grade:jetGrade(jet),
     world:short(ww), body:short(bodyH),
     week:wk, aligned:(adapt===0?7:aligned),
     yr:yrH, yrD:yrD
@@ -724,14 +734,23 @@ async function makeStoryInner(){
 
   // 시차 박스
   const jy=710;
-  x.fillStyle='#17130D'; x.fillRect(110,jy,W-220,190);
+  x.fillStyle='#17130D'; x.fillRect(110,jy,W-220,226);
   x.fillStyle='#FFE6B3'; x.font='700 28px "Noto Sans KR", sans-serif';
   x.fillText('나의 사회적 시차',W/2,jy+62);
-  x.fillStyle='#FFA54B'; x.font='58px "Press Start 2P", monospace';
-  x.fillText(STORY.jet||'0시간',W/2,jy+142);
+  x.fillStyle='#FFA54B'; x.font='50px "Press Start 2P", monospace';
+  x.fillText(STORY.jet||'0시간',W/2,jy+136);
+  {
+    const grade=STORY.grade||'';
+    x.font='900 22px "Noto Sans KR", sans-serif';
+    const gw=x.measureText(grade).width+44, gh=44, gx=W/2-gw/2, gyy=jy+172;
+    x.fillStyle='#FFA54B'; x.beginPath();
+    x.roundRect ? x.roundRect(gx,gyy,gw,gh,gh/2) : x.rect(gx,gyy,gw,gh);
+    x.fill();
+    x.fillStyle='#17130D'; x.fillText(grade,W/2,gyy+gh/2+8);
+  }
 
   // 두 개의 시계
-  const cy=950, chh=270;
+  const cy=980, chh=270;
   x.fillStyle='#fff'; x.fillRect(110,cy,W-220,chh);
   x.strokeStyle='#17130D'; x.lineWidth=6; x.strokeRect(110,cy,W-220,chh);
   x.fillStyle='#17130D'; x.fillRect(110,cy,W-220,58);
@@ -753,7 +772,7 @@ async function makeStoryInner(){
   x.fillText('몸이 준비된 시각',rx,cy+232);
 
   // 주간 스트립
-  const wy=1290;
+  const wy=1320;
   x.fillStyle='#17130D'; x.font='900 30px "Noto Sans KR", sans-serif';
   x.fillText('한 주 동안 벌어지는 일',W/2,wy);
   const DAYS=['월','화','수','목','금','토','일'];
@@ -771,8 +790,8 @@ async function makeStoryInner(){
   });
   x.fillStyle='#17130D'; x.font='900 30px "Noto Sans KR", sans-serif';
   const alignTxt = (STORY.aligned>=7)
-    ? '일주일 내내 몸이 제 시간에 맞아요'
-    : `몸이 제대로 맞는 날, 일주일에 ${STORY.aligned}일`;
+    ? '일주일 내내 멀쩡함'
+    : (STORY.aligned===0 ? '일주일 내내 단 하루도 안 멀쩡함' : `일주일에 딱 ${STORY.aligned}일만 멀쩡함`);
   x.fillText(alignTxt,W/2,by+bh+58);
 
   // 1년 누적
@@ -783,11 +802,11 @@ async function makeStoryInner(){
 
   // 푸터
   x.strokeStyle='#17130D'; x.lineWidth=5;
-  x.beginPath(); x.moveTo(150,1706); x.lineTo(W-150,1706); x.stroke();
+  x.beginPath(); x.moveTo(150,1736); x.lineTo(W-150,1736); x.stroke();
   x.fillStyle='#17130D'; x.font='900 36px "Noto Sans KR", sans-serif';
-  x.fillText('내 몸은 지금 어느 도시에 있을까?',W/2,1772);
-  x.fillStyle='#B85C0E'; x.font='26px "Press Start 2P", monospace';
-  x.fillText('@CIRKADIANOFFICIAL',W/2,1832);
+  x.fillText('나도 시차 재보기 →',W/2,1802);
+  x.fillStyle='#B85C0E'; x.font='22px "Press Start 2P", monospace';
+  x.fillText(location.host,W/2,1862);
 
   // blob: URL은 일부 안드로이드 브라우저(삼성인터넷 등)에서 길게 눌러 저장이 안 먹혀서
   // data: URL로 통일 — <a download>와 롱프레스 저장 둘 다 이게 훨씬 안정적으로 동작함
