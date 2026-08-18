@@ -15,7 +15,6 @@
 <meta name="twitter:description" content="평일과 주말의 수면 시차로 알아보는 나의 사회적 시차. 무료 30초 테스트.">
 <meta name="twitter:image" content="https://social-jetlag-test.vercel.app/og-image.png">
 <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&family=Noto+Sans+KR:wght@400;500;700;900&display=swap" rel="stylesheet">
-<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <style>
 :root{--ink:#17130D;--orange:#FFA54B;--orange-d:#B85C0E;--pale:#FFF3D6;--pale2:#FFBC69;--muted:#8A7B5E;--red:#D6462F;--pixel:'Press Start 2P',monospace;--kr:'Noto Sans KR',sans-serif}
@@ -306,7 +305,6 @@ svg.day{width:100%;height:auto;display:block}
   <button class="sclose" onclick="document.getElementById('spop').classList.remove('show')">닫기</button>
 </div>
 <canvas id="storyCanvas" width="1080" height="1920" style="display:none"></canvas>
-<div id="story-qr" style="display:none"></div>
 
 <div class="tpop-bg" id="tpop-bg" onclick="if(event.target===this)closeTimePopup(false)">
   <div class="tpop">
@@ -369,8 +367,6 @@ function fmtH(h){const m=Math.round(h*60);const H=Math.floor(m/60),M=m%60;if(H>0
 function hhmm(h){const m=Math.round(h*60);return Math.floor(m/60)+':'+String(m%60).padStart(2,'0');}
 function ampm(H){return H<6?'새벽':H<12?'오전':H<18?'오후':H<21?'저녁':'밤';}
 function clk(h){h=((h%24)+24)%24;const m=Math.round(h*60);let H=Math.floor(m/60),M=m%60;if(M===60){M=0;H=(H+1)%24;}const p=ampm(H);let h12=H%12;if(h12===0)h12=12;return `${p} ${h12}시`+(M?` ${M}분`:'');}
-// 티켓용 압축 표기 — "오후 9:30" (보딩패스 느낌으로 오전/오후 + 콜론 시:분)
-function clkCompact(h){h=((h%24)+24)%24;const m=Math.round(h*60);let H=Math.floor(m/60),M=m%60;if(M===60){M=0;H=(H+1)%24;}const p=H<12?'오전':'오후';let h12=H%12;if(h12===0)h12=12;return `${p} ${h12}:${String(M).padStart(2,'0')}`;}
 function clk2(h){h=((h%24)+24)%24;const m=Math.round(h*60);let H=Math.floor(m/60),M=m%60;const p=ampm(H);let h12=H%12;if(h12===0)h12=12;return `${p}<br>${h12}:${String(M).padStart(2,'0')}`;}
 function ida(w){const c=w.charCodeAt(w.length-1);if(c<0xAC00||c>0xD7A3)return '이에요';return ((c-0xAC00)%28)?'이에요':'예요';}
 function short(h){h=((h%24)+24)%24;const m=Math.round(h*60);let H=Math.floor(m/60),M=m%60;return `${String(H).padStart(2,'0')}:${String(M).padStart(2,'0')}`;}
@@ -386,43 +382,6 @@ const QS=[
 ];
 const ans={};
 let STORY={};
-
-/* 스토리 이미지 하단 QR — 모두에게 같은 주소라 페이지 로드 시 한 번만 생성해 재사용 */
-let qrCanvasEl=null;
-try{
-  new QRCode(document.getElementById('story-qr'),{text:location.origin+'/',width:280,height:280,colorDark:'#17130D',colorLight:'#FFFFFF',correctLevel:QRCode.CorrectLevel.M});
-  qrCanvasEl=document.querySelector('#story-qr canvas');
-}catch(_){}
-
-/* 스토리 이미지 배경의 세계지도 점무늬용 — 단순화한 대륙 윤곽 (지구본 페이지와 동일 데이터) */
-const LAND=[
- [[-168,65],[-155,71],[-130,70],[-100,72],[-82,73],[-64,60],[-56,52],[-52,47],[-66,44],[-70,42],[-75,35],[-81,25],[-90,19],[-97,16],[-105,20],[-114,28],[-124,40],[-130,48],[-140,59],[-160,60],[-168,65]],
- [[-45,60],[-30,68],[-18,72],[-20,82],[-40,83],[-56,78],[-52,68],[-46,62],[-45,60]],
- [[-80,9],[-60,11],[-52,5],[-48,-2],[-35,-6],[-38,-14],[-48,-25],[-58,-35],[-66,-45],[-74,-52],[-71,-40],[-70,-25],[-76,-12],[-81,-3],[-80,9]],
- [[-17,15],[-8,28],[0,36],[11,37],[23,33],[33,31],[43,12],[51,11],[45,2],[40,-4],[40,-16],[33,-27],[20,-35],[15,-30],[12,-16],[9,-2],[3,4],[-8,7],[-17,15]],
- [[-10,44],[-9,36],[0,38],[10,38],[19,40],[28,41],[30,45],[40,48],[38,55],[30,60],[24,66],[15,63],[8,58],[-2,52],[-8,50],[-10,44]],
- [[30,60],[38,55],[40,48],[45,42],[48,40],[56,27],[60,25],[68,24],[75,8],[80,8],[88,22],[93,22],[98,10],[106,10],[110,18],[118,22],[122,30],[128,42],[135,50],[142,54],[160,62],[178,68],[160,73],[120,76],[90,78],[60,70],[45,68],[36,66],[30,60]],
- [[95,6],[105,1],[118,5],[128,6],[140,-3],[132,-8],[120,-9],[108,-7],[100,2],[95,6]],
- [[113,-22],[122,-18],[130,-11],[142,-11],[146,-18],[153,-27],[150,-38],[140,-38],[129,-32],[115,-35],[113,-22]],
- [[166,-46],[172,-41],[178,-38],[174,-34],[168,-44],[166,-46]],
- [[129,31],[135,34],[141,37],[146,44],[141,42],[133,34],[129,31]],
- [[125,34],[126,38],[128,41],[130,42],[130,38],[129,35],[127,34],[125,34]],
- [[68,8],[77,8],[80,13],[88,22],[92,22],[80,30],[74,32],[70,24],[68,8]],
- [[7,44],[12,46],[15,42],[18,40],[16,38],[13,42],[8,44],[7,44]],
- [[35,12],[43,12],[56,25],[52,29],[42,29],[36,20],[35,12]],
- [[-25,-58],[-55,-63],[-100,-72],[-150,-75],[-180,-78],[180,-78],[100,-66],[40,-68],[-20,-70],[-25,-58]]
-];
-function isLand(lon,lat){
-  for(const poly of LAND){
-    let inside=false;
-    for(let i=0,j=poly.length-1;i<poly.length;j=i++){
-      const xi=poly[i][0],yi=poly[i][1],xj=poly[j][0],yj=poly[j][1];
-      if(((yi>lat)!==(yj>lat)) && (lon < (xj-xi)*(lat-yi)/(yj-yi)+xi)) inside=!inside;
-    }
-    if(inside) return true;
-  }
-  return false;
-}
 
 /* 닉네임 비워두면 식물 이름으로 랜덤 생성 */
 const PLANT_ADJ=['행복한','졸린','튼튼한','수줍은','용감한','촉촉한','푸른','향긋한','느긋한','대담한','상큼한','포근한','반짝이는','씩씩한'];
@@ -528,14 +487,13 @@ function run(){
       ? `시차가 커서 <b>평일 내내 따라잡지 못한 채</b> 다시 주말을 맞아요. 몸이 제대로 맞는 날이 사실상 없는 셈이에요.`
       : `시차는 하루에 약 1시간씩 회복돼요. 월요일에 어긋난 리듬이 <b>${DAYS[adapt]}요일</b>쯤 겨우 맞는데, 금요일 밤이면 또 풀리죠. 몸이 제대로 맞는 날은 일주일에 <b>${aligned}일</b>뿐이에요.`);
 
-  /* 스토리 이미지용 데이터 — 전부 결과지에 실제로 쓰이는 값 그대로 재사용 */
-  const bodyH2=ww-jet;
+  /* 스토리 이미지용 데이터 */
   STORY={
-    icon:c.icon, flag:c.flag, head:c.head, title:c.title, lm:c.lm, cityKey:c.key, city:c.city,
-    jet:fmtH(jet), jetRaw:jet, avg:hhmm(avg), yrH, yrD, aligned:(adapt===0?7:aligned),
-    world:clkCompact(ww), body:clkCompact(bodyH2),
-    tags:tags.slice(0,3), caption:(c.trav.replace(/<[^>]+>/g,'').split('. ')[0]+'.'),
-    scoreLab:sLab, score, chrono
+    icon:c.icon, flag:c.flag, head:c.head, title:c.title, lm:c.lm,
+    jet:fmtH(jet), jetRaw:jet,
+    world:short(ww), body:short(bodyH),
+    week:wk, aligned:(adapt===0?7:aligned),
+    yr:yrH, yrD:yrD
   };
 
   /* 하루 컨디션 곡선 */
@@ -660,7 +618,6 @@ function run(){
 
   // 부스 모니터(같은 브라우저로 테스트할 때만 동작) + Supabase 익명 저장
   const nickname=(document.getElementById('name').value||'').trim().slice(0,8)||previewNickname;
-  STORY.nickname=nickname;
   try{new BroadcastChannel('cirkadian').postMessage({hours:jet,name:nickname});}catch(_){}
   submitAnon({wb,ww,eb,ew,wdDur,weDur,avg,wdMid,jet,chrono,score,cityKey:c.key,nickname});
 }
@@ -723,120 +680,114 @@ async function makeStoryInner(){
     await document.fonts.ready;
   }catch(_){}
 
-  // 연한 배경 위에 뜬 티켓 한 장 — 오렌지 상단 + 흰색 하단이 한 실루엣 안에 있는 형태
+  // 배경 + 격자
   x.fillStyle='#FFF5DE'; x.fillRect(0,0,W,H);
+  x.strokeStyle='#FFE6B3'; x.lineWidth=2;
+  for(let i=0;i<W;i+=40){x.beginPath();x.moveTo(i,0);x.lineTo(i,H);x.stroke();}
+  for(let i=0;i<H;i+=40){x.beginPath();x.moveTo(0,i);x.lineTo(W,i);x.stroke();}
+  // 프레임
+  x.strokeStyle='#17130D'; x.lineWidth=12; x.strokeRect(38,38,W-76,H-76);
   x.textAlign='center'; x.textBaseline='alphabetic';
 
-  function rr(px,py,pw,ph,r){
-    x.beginPath();
-    x.moveTo(px+r,py); x.lineTo(px+pw-r,py); x.arcTo(px+pw,py,px+pw,py+r,r);
-    x.lineTo(px+pw,py+ph-r); x.arcTo(px+pw,py+ph,px+pw-r,py+ph,r);
-    x.lineTo(px+r,py+ph); x.arcTo(px,py+ph,px,py+ph-r,r);
-    x.lineTo(px,py+r); x.arcTo(px,py,px+r,py,r);
-    x.closePath();
+  // 헤더
+  const logo=await loadLogoImg();
+  if(logo){
+    const logoW=520, logoH=logoW*(logo.naturalHeight/logo.naturalWidth);
+    x.drawImage(logo,(W-logoW)/2,100,logoW,logoH);
+  }else{
+    x.fillStyle='#17130D'; x.font='40px "Press Start 2P", monospace';
+    x.fillText('CIRKADIAN',W/2,168);
   }
+  x.fillStyle='#8A7B5E'; x.font='700 26px "Noto Sans KR", sans-serif';
+  x.fillText('생체시계 시차 리포트',W/2,214);
+  x.strokeStyle='#17130D'; x.lineWidth=5;
+  x.beginPath(); x.moveTo(150,250); x.lineTo(W-150,250); x.stroke();
 
-  const todayStr=(d=>`${d.getMonth()+1}월 ${d.getDate()}일`)(new Date());
-  const cx0=60,cy0=60,cw=960,ch=1800,rad=56;
-  x.save(); x.shadowColor='rgba(23,19,13,.25)'; x.shadowBlur=50; x.shadowOffsetY=20;
-  rr(cx0,cy0,cw,ch,rad); x.fillStyle='#fff'; x.fill(); x.restore();
-  rr(cx0,cy0,cw,ch,rad); x.save(); x.clip();
-
-  // 오렌지 상단부
-  const splitY=cy0+754;
-  x.fillStyle='#F77F27'; x.fillRect(cx0,cy0,cw,splitY-cy0);
-
-  // 흰 알약 배지 — "나의 시차는 {도시}"
+  // 히어로
+  x.font='200px "Noto Color Emoji","Apple Color Emoji","Segoe UI Emoji",sans-serif';
+  x.fillText(STORY.icon||'🗼',W/2,470);
+  x.fillStyle='#8A7B5E'; x.font='700 30px "Noto Sans KR", sans-serif';
+  x.fillText(STORY.head||'',W/2,540);
+  const tPx=fitText(x,STORY.title||'',W-180,74,'900');
+  x.fillStyle='#17130D'; x.font=`900 ${tPx}px "Noto Sans KR", sans-serif`;
+  x.fillText(STORY.title||'',W/2,620);
+  x.fillStyle='#B85C0E'; x.font='700 28px "Noto Sans KR", sans-serif';
   {
-    x.font='700 30px "Noto Sans KR", sans-serif';
-    const label=`나의 시차는 ${STORY.city||''}`;
-    const tw=x.measureText(label).width, padX=44, pillW=tw+padX*2, pillH=76;
-    const px0=cx0+cw/2-pillW/2, py0=cy0+70;
-    rr(px0,py0,pillW,pillH,pillH/2); x.fillStyle='#fff'; x.fill();
-    x.fillStyle='#F77F27'; x.fillText(label,cx0+cw/2,py0+pillH/2+11);
-  }
-
-  // 곡선 항로 + 회전한 비행기
-  {
-    const ax0=cx0+140, ay0=cy0+400, ax1=cx0+cw-140, ay1=cy0+400, acx=cx0+cw/2, acy=cy0+220;
-    x.save();
-    x.strokeStyle='rgba(255,255,255,.8)'; x.lineWidth=3; x.setLineDash([11,11]);
-    x.beginPath(); x.moveTo(ax0,ay0); x.quadraticCurveTo(acx,acy,ax1,ay1); x.stroke();
-    x.restore();
-    x.fillStyle='#fff';
-    x.beginPath(); x.arc(ax0,ay0,9,0,Math.PI*2); x.fill();
-    x.beginPath(); x.arc(ax1,ay1,9,0,Math.PI*2); x.fill();
-    const t=0.34;
-    const bx=(1-t)*(1-t)*ax0+2*(1-t)*t*acx+t*t*ax1, by=(1-t)*(1-t)*ay0+2*(1-t)*t*acy+t*t*ay1;
-    const dx=2*(1-t)*(acx-ax0)+2*t*(ax1-acx), dy=2*(1-t)*(acy-ay0)+2*t*(ay1-acy);
-    x.save(); x.translate(bx,by); x.rotate(Math.atan2(dy,dx));
-    x.font='52px "Noto Color Emoji","Apple Color Emoji","Segoe UI Emoji",sans-serif';
-    x.textAlign='center'; x.textBaseline='middle';
-    x.fillText('✈️',0,0);
-    x.restore(); x.textBaseline='alphabetic';
-  }
-
-  // 큰 코드 — SEL / 배정된 도시코드
-  x.font='900 92px "Noto Sans KR", sans-serif'; x.fillStyle='#fff';
-  x.textAlign='left'; x.fillText('SEL',cx0+90,cy0+567);
-  x.textAlign='right'; x.fillText(STORY.cityKey||'---',cx0+cw-90,cy0+567);
-
-  x.font='700 28px "Noto Sans KR", sans-serif';
-  x.textAlign='left'; x.fillText('서울',cx0+90,cy0+610);
-  x.textAlign='right'; x.fillText(STORY.city||'',cx0+cw-90,cy0+610);
-
-  x.font='600 22px "Noto Sans KR", sans-serif'; x.fillStyle='rgba(255,255,255,.85)';
-  x.textAlign='left'; x.fillText(STORY.world||'--',cx0+90,cy0+644);
-  x.textAlign='right'; x.fillText(STORY.body||'--',cx0+cw-90,cy0+644);
-  x.textAlign='center';
-
-  // 흰색 하단부 — 정보 그리드 (전부 결과지에 실제로 나오는 수치 그대로)
-  const scoreColor=({최상:'#2E9E5B',양호:'#B85C0E',주의:'#D9871F',위험:'#D6462F'})[STORY.scoreLab]||'#17130D';
-  const fieldsGrid=[
-    ['사회적 시차',STORY.jet||'--','#F77F27','평균 수면',STORY.avg||'--','#17130D'],
-    ['시간대',STORY.chrono||'--','#17130D','수면 습관',`${STORY.scoreLab||'--'} ${STORY.score||0}점`,scoreColor],
-    ['1년 누적',`${STORY.yrH||0}시간`,'#17130D','몸이 맞는 날',`${STORY.aligned||0}일`,'#17130D']
-  ];
-  const gx1=cx0+70, gx2=cx0+cw/2+40;
-  let gy=splitY+96;
-  fieldsGrid.forEach(([l1,v1,c1,l2,v2,c2])=>{
+    const flagTxt=STORY.flag||'', lmTxt=STORY.lm||'', gapPx=14;
+    const flagW=x.measureText(flagTxt).width, lmW=x.measureText(lmTxt).width;
+    let sx=W/2-(flagW+gapPx+lmW)/2;
     x.textAlign='left';
-    x.fillStyle='#9A9080'; x.font='700 17px "Noto Sans KR", sans-serif';
-    x.fillText(l1,gx1,gy); x.fillText(l2,gx2,gy);
-    x.font='900 32px "Noto Sans KR", sans-serif';
-    x.fillStyle=c1; x.fillText(v1,gx1,gy+42);
-    x.fillStyle=c2; x.fillText(v2,gx2,gy+42);
-    gy+=160;
+    x.fillText(flagTxt,sx,668); sx+=flagW+gapPx;
+    x.fillText(lmTxt,sx,668);
+    x.textAlign='center';
+  }
+
+  // 시차 박스
+  const jy=710;
+  x.fillStyle='#17130D'; x.fillRect(110,jy,W-220,190);
+  x.fillStyle='#FFE6B3'; x.font='700 28px "Noto Sans KR", sans-serif';
+  x.fillText('나의 사회적 시차',W/2,jy+62);
+  x.fillStyle='#FFA54B'; x.font='58px "Press Start 2P", monospace';
+  x.fillText(STORY.jet||'0시간',W/2,jy+142);
+
+  // 두 개의 시계
+  const cy=950, chh=270;
+  x.fillStyle='#fff'; x.fillRect(110,cy,W-220,chh);
+  x.strokeStyle='#17130D'; x.lineWidth=6; x.strokeRect(110,cy,W-220,chh);
+  x.fillStyle='#17130D'; x.fillRect(110,cy,W-220,58);
+  x.fillStyle='#fff'; x.font='900 28px "Noto Sans KR", sans-serif';
+  x.fillText('월요일 아침, 두 개의 시계',W/2,cy+39);
+
+  const lx=110+(W-220)*0.27, rx=110+(W-220)*0.73;
+  x.fillStyle='#8A7B5E'; x.font='700 24px "Noto Sans KR", sans-serif';
+  x.fillText('세상의 시계',lx,cy+112);
+  x.fillText('당신 몸의 시계',rx,cy+112);
+  x.fillStyle='#17130D'; x.font='46px "Press Start 2P", monospace';
+  x.fillText(STORY.world||'--:--',lx,cy+188);
+  x.fillStyle='#D6462F';
+  x.fillText(STORY.body||'--:--',rx,cy+188);
+  x.fillStyle='#B85C0E'; x.font='34px "Press Start 2P", monospace';
+  x.fillText('>',W/2,cy+178);
+  x.fillStyle='#8A7B5E'; x.font='700 24px "Noto Sans KR", sans-serif';
+  x.fillText('알람이 울리는 시각',lx,cy+232);
+  x.fillText('몸이 느끼는 시각',rx,cy+232);
+
+  // 주간 스트립
+  const wy=1290;
+  x.fillStyle='#17130D'; x.font='900 30px "Noto Sans KR", sans-serif';
+  x.fillText('한 주 동안 벌어지는 일',W/2,wy);
+  const DAYS=['월','화','수','목','금','토','일'];
+  const COL={miss:'#D6462F',warm:'#FFA54B',ok:'#FFF3D6',off:'#EDE4CE'};
+  const cellW=112, gap=12, totalW=cellW*7+gap*6, sx=(W-totalW)/2, by=wy+58, bh=104;
+  (STORY.week||[]).forEach((w,i)=>{
+    const bx=sx+i*(cellW+gap);
+    x.fillStyle='#8A7B5E'; x.font='700 24px "Noto Sans KR", sans-serif';
+    x.fillText(DAYS[i],bx+cellW/2,by-8);
+    x.fillStyle=COL[w.cls]||'#EDE4CE'; x.fillRect(bx,by,cellW,bh);
+    x.strokeStyle='#17130D'; x.lineWidth=5; x.strokeRect(bx,by,cellW,bh);
+    x.fillStyle=(w.cls==='miss')?'#fff':'#17130D';
+    x.font='900 34px "Noto Sans KR", sans-serif';
+    x.fillText(w.mk||'',bx+cellW/2,by+bh/2+13);
   });
-  x.textAlign='center';
+  x.fillStyle='#17130D'; x.font='900 30px "Noto Sans KR", sans-serif';
+  const alignTxt = (STORY.aligned>=7)
+    ? '일주일 내내 몸이 제 시간에 맞아요'
+    : `몸이 제대로 맞는 날, 일주일에 ${STORY.aligned}일`;
+  x.fillText(alignTxt,W/2,by+bh+58);
 
-  // 절취선 + 양쪽 노치
-  const perfY=gy+16;
-  x.save();
-  x.strokeStyle='#D8CFB8'; x.lineWidth=3; x.setLineDash([12,10]);
-  x.beginPath(); x.moveTo(cx0+70,perfY); x.lineTo(cx0+cw-70,perfY); x.stroke();
-  x.restore();
-  x.fillStyle='#FFF5DE';
-  x.beginPath(); x.arc(cx0,perfY,22,0,Math.PI*2); x.fill();
-  x.beginPath(); x.arc(cx0+cw,perfY,22,0,Math.PI*2); x.fill();
+  // 1년 누적
+  if(STORY.jetRaw>=0.5){
+    x.fillStyle='#8A7B5E'; x.font='700 26px "Noto Sans KR", sans-serif';
+    x.fillText(`1년이면 ${STORY.yr}시간 — 시차 적응에만 ${STORY.yrD}일`,W/2,by+bh+108);
+  }
 
-  // 탑승객 / 태그 + QR
-  x.textAlign='left';
-  x.fillStyle='#9A9080'; x.font='700 17px "Noto Sans KR", sans-serif';
-  x.fillText('탑승객',gx1,perfY+72);
-  x.fillStyle='#F77F27'; x.font='900 32px "Noto Sans KR", sans-serif';
-  x.fillText(STORY.nickname||'익명',gx1,perfY+114);
-
-  x.fillStyle='#9A9080'; x.font='700 17px "Noto Sans KR", sans-serif';
-  x.fillText('태그',gx1,perfY+180);
-  x.fillStyle='#F77F27'; x.font='900 32px "Noto Sans KR", sans-serif';
-  x.fillText((STORY.tags&&STORY.tags[0])||'#균형리듬',gx1,perfY+222);
-
-  const qrSize=190, qrX=cx0+cw-70-qrSize, qrY=perfY+50;
-  if(qrCanvasEl) x.drawImage(qrCanvasEl,qrX,qrY,qrSize,qrSize);
-  x.textAlign='center';
-
-  x.restore(); // clip
+  // 푸터
+  x.strokeStyle='#17130D'; x.lineWidth=5;
+  x.beginPath(); x.moveTo(150,1706); x.lineTo(W-150,1706); x.stroke();
+  x.fillStyle='#17130D'; x.font='900 36px "Noto Sans KR", sans-serif';
+  x.fillText('내 몸은 지금 어느 도시에 있을까?',W/2,1772);
+  x.fillStyle='#B85C0E'; x.font='26px "Press Start 2P", monospace';
+  x.fillText('@CIRKADIANOFFICIAL',W/2,1832);
 
   // blob: URL은 일부 안드로이드 브라우저(삼성인터넷 등)에서 길게 눌러 저장이 안 먹혀서
   // data: URL로 통일 — <a download>와 롱프레스 저장 둘 다 이게 훨씬 안정적으로 동작함
