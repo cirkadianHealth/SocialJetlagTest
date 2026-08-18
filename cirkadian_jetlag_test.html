@@ -155,14 +155,13 @@ svg.day{width:100%;height:auto;display:block}
 .foot{text-align:center;padding:18px 16px}
 .foot .fq{font-family:var(--pixel);font-size:11px;margin-bottom:6px}
 .foot .fq b{color:var(--orange-d)}
-.foot .ig{font-family:var(--pixel);font-size:10px;color:var(--muted)}
+.foot .ig{font-family:var(--pixel);font-size:10px;color:var(--muted);text-decoration:none;display:inline-block}
 .disc{font-size:10px;color:var(--muted);text-align:center;margin-top:12px;line-height:1.6}
 
 /* ===== 인스타 스토리용 9:16 이미지 (canvas로 직접 그려서 다운로드) ===== */
 .sharebtn{width:100%;font-family:var(--kr);font-weight:900;font-size:17px;border:3px solid var(--ink);background:var(--orange);color:var(--ink);padding:17px;box-shadow:5px 5px 0 var(--ink);cursor:pointer;margin-bottom:16px}
 .sharebtn:active{transform:translate(3px,3px);box-shadow:2px 2px 0 var(--ink)}
 .sharebtn:disabled{opacity:.6;cursor:default}
-a.sharebtn{display:block;box-sizing:border-box;text-decoration:none;text-align:center}
 .spop{display:none;position:fixed;inset:0;background:rgba(23,19,13,.8);z-index:60;align-items:center;justify-content:center;flex-direction:column;padding:20px}
 .spop.show{display:flex}
 .spop img{max-width:100%;max-height:70vh;border:3px solid var(--ink);box-shadow:6px 6px 0 rgba(0,0,0,.4)}
@@ -293,12 +292,10 @@ a.sharebtn{display:block;box-sizing:border-box;text-decoration:none;text-align:c
     <div class="card">
       <div class="foot">
         <div class="fq">당신의 <b>리듬</b>을 찾아보세요</div>
-        <div class="ig">@CIRKADIANOFFICIAL</div>
+        <a class="ig" href="https://cirkadian-coex.vercel.app/" target="_blank" rel="noopener">@CIRKADIANOFFICIAL</a>
         <p class="disc">설문 기반 참고용 리포트예요. 재미·습관 점검용이며 의학적 진단이 아닙니다.</p>
       </div>
     </div>
-
-    <a class="sharebtn" href="https://cirkadian-coex.vercel.app/" target="_blank" rel="noopener">📱 미모 앱 다운로드</a>
 
     <button class="btn alt" onclick="location.reload()">다시 하기 🔄</button>
   </div>
