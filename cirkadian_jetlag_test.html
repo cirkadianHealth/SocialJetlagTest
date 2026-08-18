@@ -70,9 +70,6 @@ button.tsel.active{background:var(--pale2)}
 #result{display:none}
 .card{background:#fff;border:3px solid var(--ink);box-shadow:6px 6px 0 var(--ink);margin-bottom:16px}
 .cbody{padding:16px}
-.boardwrap{width:100%;height:220px;border:2px solid var(--ink);overflow:hidden;background:var(--pale)}
-.boardwrap iframe{width:100%;height:100%;border:0}
-.boardlink{display:block;text-align:right;margin-top:8px;font-size:12.5px;font-weight:700;color:var(--orange-d);text-decoration:none}
 
 /* 히어로 */
 .rhero{text-align:center;padding:24px 16px 20px;background:var(--pale);
@@ -291,16 +288,6 @@ svg.day{width:100%;height:auto;display:block}
     </div>
 
     <button class="sharebtn" id="sharebtn" onclick="makeStory()">📸 인스타 스토리용 이미지 저장</button>
-
-    <div class="card">
-      <div class="bar">🌍 지금 실시간 현황판</div>
-      <div class="cbody">
-        <div class="boardwrap">
-          <iframe src="/board" loading="lazy" title="실시간 현황판"></iframe>
-        </div>
-        <a class="boardlink" href="/board" target="_blank" rel="noopener">크게 보기 →</a>
-      </div>
-    </div>
 
     <div class="card">
       <div class="foot">
