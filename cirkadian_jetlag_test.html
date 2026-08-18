@@ -228,18 +228,18 @@ svg.day{width:100%;height:auto;display:block}
 
     <!-- 몸시계 변환 -->
     <div class="clockcard">
-      <div class="bar">⏱ 월요일 아침, 두 개의 시계</div>
+      <div class="bar">⏱ 알람 시각 vs 내 몸 시각</div>
       <div class="clockrow">
         <div class="cslot world">
-          <div class="lab">세상의 시계</div>
+          <div class="lab">알람 시각</div>
           <div class="tm" id="c-world">오전<br>7:00</div>
-          <div class="sub">알람이 울리는 시각</div>
+          <div class="sub">실제로 일어나야 하는 시각</div>
         </div>
         <div class="carrow">▶</div>
         <div class="cslot body">
-          <div class="lab">당신 몸의 시계</div>
+          <div class="lab">내 몸 시각</div>
           <div class="tm" id="c-body">오전<br>5:00</div>
-          <div class="sub">몸이 느끼는 시각</div>
+          <div class="sub">몸이 준비된 시각</div>
         </div>
       </div>
       <div class="clocknote" id="c-note"></div>
@@ -736,12 +736,12 @@ async function makeStoryInner(){
   x.strokeStyle='#17130D'; x.lineWidth=6; x.strokeRect(110,cy,W-220,chh);
   x.fillStyle='#17130D'; x.fillRect(110,cy,W-220,58);
   x.fillStyle='#fff'; x.font='900 28px "Noto Sans KR", sans-serif';
-  x.fillText('월요일 아침, 두 개의 시계',W/2,cy+39);
+  x.fillText('알람 시각 vs 내 몸 시각',W/2,cy+39);
 
   const lx=110+(W-220)*0.27, rx=110+(W-220)*0.73;
   x.fillStyle='#8A7B5E'; x.font='700 24px "Noto Sans KR", sans-serif';
-  x.fillText('세상의 시계',lx,cy+112);
-  x.fillText('당신 몸의 시계',rx,cy+112);
+  x.fillText('알람 시각',lx,cy+112);
+  x.fillText('내 몸 시각',rx,cy+112);
   x.fillStyle='#17130D'; x.font='46px "Press Start 2P", monospace';
   x.fillText(STORY.world||'--:--',lx,cy+188);
   x.fillStyle='#D6462F';
@@ -749,8 +749,8 @@ async function makeStoryInner(){
   x.fillStyle='#B85C0E'; x.font='34px "Press Start 2P", monospace';
   x.fillText('>',W/2,cy+178);
   x.fillStyle='#8A7B5E'; x.font='700 24px "Noto Sans KR", sans-serif';
-  x.fillText('알람이 울리는 시각',lx,cy+232);
-  x.fillText('몸이 느끼는 시각',rx,cy+232);
+  x.fillText('실제로 일어나야 하는 시각',lx,cy+232);
+  x.fillText('몸이 준비된 시각',rx,cy+232);
 
   // 주간 스트립
   const wy=1290;
