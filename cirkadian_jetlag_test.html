@@ -741,6 +741,7 @@ async function makeStoryInner(){
     x.closePath();
   }
 
+  const todayStr=(d=>`${d.getMonth()+1}월 ${d.getDate()}일`)(new Date());
   const cx0=60,cy0=60,cw=960,ch=1800,rad=56;
   x.save(); x.shadowColor='rgba(23,19,13,.25)'; x.shadowBlur=50; x.shadowOffsetY=20;
   rr(cx0,cy0,cw,ch,rad); x.fillStyle='#fff'; x.fill(); x.restore();
