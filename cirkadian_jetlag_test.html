@@ -70,7 +70,10 @@ button.tsel.active{background:var(--pale2)}
 #result{display:none}
 .card{background:#fff;border:3px solid var(--ink);box-shadow:6px 6px 0 var(--ink);margin-bottom:16px}
 .cbody{padding:16px}
-.morelink{display:block;text-align:right;margin:-6px 0 16px;font-size:13px;font-weight:900;color:var(--orange-d);text-decoration:none}
+.ctabtn{display:block;text-decoration:none;text-align:center;background:var(--ink);color:#fff;border:3px solid var(--ink);box-shadow:5px 5px 0 var(--orange);padding:16px 14px;margin-bottom:16px}
+.ctabtn .t{display:block;font-size:19px;font-weight:900;color:var(--orange)}
+.ctabtn .s{display:block;font-size:12.5px;font-weight:700;color:#E5D8B8;margin-top:6px}
+.ctabtn:active{transform:translate(3px,3px);box-shadow:2px 2px 0 var(--orange)}
 
 /* 히어로 */
 .rhero{text-align:center;padding:24px 16px 20px;background:var(--pale);
@@ -229,6 +232,11 @@ svg.day{width:100%;height:auto;display:block}
       <div class="yr" id="r-year"></div>
     </div>
 
+    <a class="ctabtn" href="https://cirkadian-coex.vercel.app/" target="_blank" rel="noopener">
+      <span class="t">더 자세한 분석 받기</span>
+      <span class="s">미모 앱에서 내 수면 데이터 전체를 확인해보세요</span>
+    </a>
+
     <!-- 몸시계 변환 -->
     <div class="clockcard">
       <div class="bar">⏱ 알람 시각 vs 내 몸 시각</div>
@@ -281,7 +289,6 @@ svg.day{width:100%;height:auto;display:block}
 
     <!-- 인사이트 -->
     <div class="card" id="r-insights"></div>
-    <a class="morelink" href="https://cirkadian-coex.vercel.app/" target="_blank" rel="noopener">더 자세한 분석 받기 →</a>
 
     <!-- 체크리스트 -->
     <div class="card">
