@@ -369,6 +369,8 @@ function fmtH(h){const m=Math.round(h*60);const H=Math.floor(m/60),M=m%60;if(H>0
 function hhmm(h){const m=Math.round(h*60);return Math.floor(m/60)+':'+String(m%60).padStart(2,'0');}
 function ampm(H){return H<6?'새벽':H<12?'오전':H<18?'오후':H<21?'저녁':'밤';}
 function clk(h){h=((h%24)+24)%24;const m=Math.round(h*60);let H=Math.floor(m/60),M=m%60;if(M===60){M=0;H=(H+1)%24;}const p=ampm(H);let h12=H%12;if(h12===0)h12=12;return `${p} ${h12}시`+(M?` ${M}분`:'');}
+// 티켓용 압축 표기 — "오후 9:30" (보딩패스 느낌으로 오전/오후 + 콜론 시:분)
+function clkCompact(h){h=((h%24)+24)%24;const m=Math.round(h*60);let H=Math.floor(m/60),M=m%60;if(M===60){M=0;H=(H+1)%24;}const p=H<12?'오전':'오후';let h12=H%12;if(h12===0)h12=12;return `${p} ${h12}:${String(M).padStart(2,'0')}`;}
 function clk2(h){h=((h%24)+24)%24;const m=Math.round(h*60);let H=Math.floor(m/60),M=m%60;const p=ampm(H);let h12=H%12;if(h12===0)h12=12;return `${p}<br>${h12}:${String(M).padStart(2,'0')}`;}
 function ida(w){const c=w.charCodeAt(w.length-1);if(c<0xAC00||c>0xD7A3)return '이에요';return ((c-0xAC00)%28)?'이에요':'예요';}
 function short(h){h=((h%24)+24)%24;const m=Math.round(h*60);let H=Math.floor(m/60),M=m%60;return `${String(H).padStart(2,'0')}:${String(M).padStart(2,'0')}`;}
@@ -532,7 +534,7 @@ function run(){
   STORY={
     icon:c.icon, flag:c.flag, head:c.head, title:c.title, lm:c.lm, cityKey:c.key, city:c.city,
     jet:fmtH(jet), jetRaw:jet,
-    world:clk(ww), body:clk(bodyH2),
+    world:clkCompact(ww), body:clkCompact(bodyH2),
     boarding:clk(jet>=1 ? wb-Math.min(1,jet*0.5) : wb),
     tags:tags.slice(0,3), caption:(c.trav.replace(/<[^>]+>/g,'').split('. ')[0]+'.'),
     jetPct:clamp(Math.round(jet/8*100),5,100),
@@ -793,22 +795,21 @@ async function makeStoryInner(){
   x.textAlign='center';
 
   // 흰색 하단부 — 정보 그리드
+  const scoreColor=({최상:'#2E9E5B',양호:'#B85C0E',주의:'#D9871F',위험:'#D6462F'})[STORY.scoreLab]||'#17130D';
   const fieldsGrid=[
-    ['편명',`CK${(STORY.cityKey||'SEL')}${String(new Date().getDate()).padStart(2,'0')}`,'날짜',todayStr],
-    ['탑승 준비',STORY.boarding||'--','비행시간',STORY.jet||'--'],
-    ['크로노타입',STORY.chrono||'--','컨디션',STORY.scoreLab||'--']
+    ['FLIGHT',`CK${(STORY.cityKey||'SEL')}${String(new Date().getDate()).padStart(2,'0')}`,'#F77F27','DATE',todayStr,'#17130D'],
+    ['GATE',STORY.scoreLab||'--',scoreColor,'BOARDING',STORY.boarding||'--','#17130D'],
+    ['CLASS',STORY.chrono||'--','#17130D','FLIGHT TIME',STORY.jet||'--','#17130D']
   ];
   const gx1=cx0+70, gx2=cx0+cw/2+40;
   let gy=splitY+96;
-  fieldsGrid.forEach(([l1,v1,l2,v2],i)=>{
+  fieldsGrid.forEach(([l1,v1,c1,l2,v2,c2])=>{
     x.textAlign='left';
-    x.fillStyle='#9A9080'; x.font='700 20px "Noto Sans KR", sans-serif';
+    x.fillStyle='#9A9080'; x.font='700 17px "Noto Sans KR", sans-serif';
     x.fillText(l1,gx1,gy); x.fillText(l2,gx2,gy);
-    x.fillStyle= i===2 ? ({최상:'#2E9E5B',양호:'#B85C0E',주의:'#D9871F',위험:'#D6462F'})[STORY.scoreLab]||'#17130D' : '#17130D';
     x.font='900 32px "Noto Sans KR", sans-serif';
-    x.fillText(v1,gx1,gy+42);
-    x.fillStyle= '#17130D';
-    x.fillText(v2,gx2,gy+42);
+    x.fillStyle=c1; x.fillText(v1,gx1,gy+42);
+    x.fillStyle=c2; x.fillText(v2,gx2,gy+42);
     gy+=160;
   });
   x.textAlign='center';
@@ -825,13 +826,13 @@ async function makeStoryInner(){
 
   // 승객 / 좌석 + QR
   x.textAlign='left';
-  x.fillStyle='#9A9080'; x.font='700 20px "Noto Sans KR", sans-serif';
-  x.fillText('탑승객',gx1,perfY+72);
+  x.fillStyle='#9A9080'; x.font='700 17px "Noto Sans KR", sans-serif';
+  x.fillText('PASSENGER',gx1,perfY+72);
   x.fillStyle='#F77F27'; x.font='900 32px "Noto Sans KR", sans-serif';
   x.fillText(STORY.nickname||'익명',gx1,perfY+114);
 
-  x.fillStyle='#9A9080'; x.font='700 20px "Noto Sans KR", sans-serif';
-  x.fillText('좌석',gx1,perfY+180);
+  x.fillStyle='#9A9080'; x.font='700 17px "Noto Sans KR", sans-serif';
+  x.fillText('SEAT',gx1,perfY+180);
   x.fillStyle='#F77F27'; x.font='900 32px "Noto Sans KR", sans-serif';
   x.fillText(`${(STORY.jetPct||10)%30+1}${['A','B','C','D','E','F'][(STORY.owlPct||0)%6]}`,gx1,perfY+222);
 
